@@ -1,0 +1,12 @@
+{
+  "name": "pos-sync-server",
+  "version": "1.0.0",
+  "description": "خادم مزامنة محلي لنظام الكاشير بين حاسوبين على نفس شبكة الواي فاي",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

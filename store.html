@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المتجر الإلكتروني</title>
+<style>
+  :root{
+    --violet:#6d28d9;
+    --violet-dark:#4c1d95;
+    --violet-light:#ede9fe;
+    --gray:#f4f4f6;
+    --text:#1f1b2e;
+    --muted:#6b7280;
+    --white:#ffffff;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+    background:var(--gray);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg, var(--violet), var(--violet-dark));
+    color:#fff;
+    padding:18px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:20;
+    box-shadow:0 4px 14px rgba(0,0,0,.15);
+  }
+  header h1{font-size:20px;margin:0;font-weight:700;}
+  #cartBtn{
+    background:#fff;
+    color:var(--violet-dark);
+    border:none;
+    border-radius:999px;
+    padding:9px 16px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  #cartBadge{
+    background:var(--violet-dark);
+    color:#fff;
+    border-radius:999px;
+    padding:1px 8px;
+    font-size:12px;
+  }
+  .container{max-width:1100px;margin:0 auto;padding:16px;}
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  #search{
+    flex:1;
+    min-width:180px;
+    padding:11px 14px;
+    border-radius:999px;
+    border:1px solid #ddd;
+    font-size:14px;
+    background:#fff;
+  }
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .chip{
+    white-space:nowrap;
+    padding:8px 16px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid #ddd;
+    cursor:pointer;
+    font-size:13px;
+    color:var(--text);
+  }
+  .chip.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+    gap:14px;
+    margin-top:16px;
+  }
+  .card{
+    background:#fff;
+    border-radius:var(--radius);
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+  .card .cat{font-size:11px;color:var(--violet);background:var(--violet-light);padding:3px 8px;border-radius:999px;align-self:flex-start;}
+  .card .name{font-weight:700;font-size:14px;min-height:38px;}
+  .card .price{font-size:16px;font-weight:800;color:var(--violet-dark);}
+  .card .stock{font-size:12px;color:var(--muted);}
+  .card .stock.out{color:#b91c1c;}
+  .addBtn{
+    margin-top:auto;
+    background:var(--violet);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:9px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .addBtn:disabled{background:#d1d5db;cursor:not-allowed;}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.4);
+    display:none;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:#fff;
+    width:100%;max-width:480px;
+    border-radius:20px 20px 0 0;
+    max-height:88vh;
+    overflow-y:auto;
+    padding:18px;
+  }
+  .sheet h2{margin-top:0;font-size:18px;color:var(--violet-dark);}
+  .cartRow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;}
+  .cartRow .info{flex:1;}
+  .cartRow .info .n{font-weight:700;font-size:14px;}
+  .cartRow .info .p{font-size:12px;color:var(--muted);}
+  .qtyBox{display:flex;align-items:center;gap:8px;}
+  .qtyBox button{
+    width:28px;height:28px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:15px;
+  }
+  .totalRow{display:flex;justify-content:space-between;font-weight:800;font-size:16px;margin:14px 0;padding-top:10px;border-top:2px solid var(--violet-light);}
+  input, textarea{
+    width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ddd;font-size:14px;margin-bottom:10px;font-family:inherit;
+  }
+  .primaryBtn{
+    width:100%;background:var(--violet);color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;
+  }
+  .primaryBtn:disabled{background:#d1d5db;}
+  .ghostBtn{
+    width:100%;background:transparent;color:var(--violet-dark);border:1px solid var(--violet);border-radius:12px;padding:11px;font-weight:700;cursor:pointer;margin-top:8px;
+  }
+  .closeX{position:absolute;left:16px;top:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+  .sheetHead{position:relative;}
+  .successBox{text-align:center;padding:30px 10px;}
+  .successBox .tick{font-size:52px;}
+  .orderNo{color:var(--violet-dark);font-weight:800;}
+  #configBtn{display:none;position:fixed;bottom:14px;left:14px;background:#fff;border:1px solid #ddd;border-radius:999px;padding:8px 12px;font-size:12px;color:var(--muted);cursor:pointer;z-index:15;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="shopTitle">المتجر الإلكتروني</h1>
+  <button id="cartBtn" onclick="openCart()">🛒 السلة <span id="cartBadge">0</span></button>
+</header>
+
+<div class="container">
+  <div class="toolbar">
+    <input id="search" placeholder="ابحث عن منتج..." oninput="render()">
+  </div>
+  <div class="chips" id="chips"></div>
+  <div id="grid" class="grid"></div>
+  <div id="emptyMsg" class="empty" style="display:none;">لا توجد منتجات مطابقة</div>
+</div>
+
+<button id="configBtn" onclick="openConfig()">⚙ إعداد الاتصال بالمتجر</button>
+
+<!-- سلة المشتريات -->
+<div class="overlay" id="cartOverlay">
+  <div class="sheet">
+    <div class="sheetHead">
+      <h2>سلة المشتريات</h2>
+      <button class="closeX" onclick="closeSheet('cartOverlay')">✕</button>
+    </div>
+    <div id="cartList"></div>
+    <div class="totalRow"><span>المجموع</span><span id="cartTotal">0</span></div>
+    <button class="primaryBtn" id="checkoutBtn" onclick="openCheckout()">إتمام الطلب</button>
+  </div>
+</div>
+
+<!-- نموذج الطلب -->
+<div class="overlay" id="checkoutOverlay">
+  <div class="sheet">
+    <div class="sheetHead">
+      <h2>معلومات التوصيل</h2>
+      <button class="closeX" onclick="closeSheet('checkoutOverlay')">✕</button>
+    </div>
+    <input id="custName" placeholder="الاسم الكامل *">
+    <input id="custPhone" placeholder="رقم الهاتف *" type="tel">
+    <input id="custAddress" placeholder="العنوان (اختياري)">
+    <textarea id="custNotes" placeholder="ملاحظات (اختياري)" rows="2"></textarea>
+    <button class="primaryBtn" id="submitOrderBtn" onclick="submitOrder()">تأكيد الطلب</button>
+    <div id="checkoutError" style="color:#b91c1c;font-size:13px;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- تأكيد الطلب -->
+<div class="overlay" id="successOverlay">
+  <div class="sheet">
+    <div class="successBox">
+      <div class="tick">✅</div>
+      <h2>تم استلام طلبك بنجاح</h2>
+      <p>رقم طلبك: <span class="orderNo" id="successOrderId"></span></p>
+      <p style="color:var(--muted);font-size:13px;">سنتصل بك قريبًا لتأكيد التوصيل.</p>
+      <button class="primaryBtn" onclick="closeSheet('successOverlay')">حسنًا</button>
+    </div>
+  </div>
+</div>
+
+<!-- إعداد الاتصال -->
+<div class="overlay" id="configOverlay">
+  <div class="sheet">
+    <div class="sheetHead">
+      <h2>إعداد الاتصال بالمتجر</h2>
+      <button class="closeX" onclick="closeSheet('configOverlay')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);">هذا الإعداد يُحفظ في هذا المتصفح فقط (لا يؤثر على المتجر نفسه). اضبطه مرة واحدة على كل جهاز يفتح صفحة المتجر.</p>
+    <input id="cfgApiBase" placeholder="عنوان الخادم، مثال: http://192.168.1.3:3000">
+    <input id="cfgShopId" placeholder="رمز المحل (نفس الرمز المستعمل في نظام الكاشير)">
+    <button class="primaryBtn" onclick="saveConfig()">حفظ</button>
+  </div>
+</div>
+
+<script>
+const CFG_KEY = 'store_config_v1';
+function loadConfig(){
+  let cfg = {};
+  try{ cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); }catch(e){}
+  return Object.assign({
+    apiBase: location.origin,
+    shopId: 'shop1'
+  }, cfg);
+}
+let CONFIG = loadConfig();
+
+function openConfig(){
+  document.getElementById('cfgApiBase').value = CONFIG.apiBase;
+  document.getElementById('cfgShopId').value = CONFIG.shopId;
+  document.getElementById('configOverlay').classList.add('show');
+}
+function saveConfig(){
+  CONFIG.apiBase = document.getElementById('cfgApiBase').value.trim() || location.origin;
+  CONFIG.shopId = document.getElementById('cfgShopId').value.trim() || 'shop1';
+  localStorage.setItem(CFG_KEY, JSON.stringify(CONFIG));
+  closeSheet('configOverlay');
+  loadStore();
+}
+
+let PRODUCTS = [];
+let CURRENCY = 'دج';
+let ACTIVE_CATEGORY = 'الكل';
+let CART = {}; // productId -> {product, qty}
+
+function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
+
+async function loadStore(){
+  try{
+    const res = await fetch(CONFIG.apiBase.replace(/\/$/,'') + '/api/store/' + encodeURIComponent(CONFIG.shopId));
+    const data = await res.json();
+    if(!data.ok) throw new Error('failed');
+    document.getElementById('shopTitle').textContent = data.shopName || 'المتجر الإلكتروني';
+    CURRENCY = data.currency || 'دج';
+    PRODUCTS = data.products || [];
+    buildChips();
+    render();
+  }catch(e){
+    document.getElementById('grid').innerHTML = '';
+    document.getElementById('emptyMsg').style.display = 'block';
+    document.getElementById('emptyMsg').textContent = 'تعذّر الاتصال بالمتجر. تأكد من إعداد الاتصال (زر الإعداد أسفل الصفحة) ومن أن الخادم يعمل.';
+  }
+}
+
+function buildChips(){
+  const cats = ['الكل', ...new Set(PRODUCTS.map(p => p.category || 'أخرى').filter(Boolean))];
+  document.getElementById('chips').innerHTML = cats.map(c =>
+    `<div class="chip ${c===ACTIVE_CATEGORY?'active':''}" data-c="${esc(c)}" onclick="setCategory(this.dataset.c)">${esc(c)}</div>`
+  ).join('');
+}
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function setCategory(c){ ACTIVE_CATEGORY = c; buildChips(); render(); }
+
+function render(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  let list = PRODUCTS.filter(p => {
+    const okCat = ACTIVE_CATEGORY === 'الكل' || (p.category || 'أخرى') === ACTIVE_CATEGORY;
+    const okQ = !q || (p.name || '').toLowerCase().includes(q);
+    return okCat && okQ;
+  });
+  const grid = document.getElementById('grid');
+  document.getElementById('emptyMsg').style.display = list.length ? 'none' : 'block';
+  document.getElementById('emptyMsg').textContent = PRODUCTS.length ? 'لا توجد منتجات مطابقة' : 'المتجر قيد التحضير، عُد قريبًا.';
+  grid.innerHTML = list.map(p => {
+    const out = !(p.quantity > 0);
+    return `<div class="card">
+      <span class="cat">${esc(p.category || 'أخرى')}</span>
+      <div class="name">${esc(p.name)}</div>
+      <div class="price">${esc(p.sellPrice)} ${esc(CURRENCY)}</div>
+      <div class="stock ${out?'out':''}">${out ? 'غير متوفر حاليًا' : 'متوفر'}</div>
+      <button class="addBtn" ${out?'disabled':''} data-id="${esc(p.id)}" onclick="addToCart(this.dataset.id)">${out?'غير متوفر':'أضف للسلة'}</button>
+    </div>`;
+  }).join('');
+}
+
+function addToCart(id){
+  const p = PRODUCTS.find(x => x.id === id);
+  if(!p) return;
+  if(!CART[id]) CART[id] = { product: p, qty: 0 };
+  if(CART[id].qty < p.quantity) CART[id].qty += 1;
+  updateCartBadge();
+}
+function updateCartBadge(){
+  const count = Object.values(CART).reduce((s,c)=>s+c.qty,0);
+  document.getElementById('cartBadge').textContent = count;
+}
+function openCart(){
+  renderCart();
+  document.getElementById('cartOverlay').classList.add('show');
+}
+function renderCart(){
+  const items = Object.values(CART).filter(c => c.qty > 0);
+  const list = document.getElementById('cartList');
+  if(items.length === 0){
+    list.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0;">السلة فارغة</p>';
+  } else {
+    list.innerHTML = items.map(c => `
+      <div class="cartRow">
+        <div class="info">
+          <div class="n">${esc(c.product.name)}</div>
+          <div class="p">${esc(c.product.sellPrice)} ${esc(CURRENCY)}</div>
+        </div>
+        <div class="qtyBox" data-id="${esc(c.product.id)}">
+          <button onclick="changeQty(this.parentNode.dataset.id, -1)">−</button>
+          <span>${c.qty}</span>
+          <button onclick="changeQty(this.parentNode.dataset.id, 1)">+</button>
+        </div>
+      </div>`).join('');
+  }
+  const total = items.reduce((s,c)=>s + c.qty * c.product.sellPrice, 0);
+  document.getElementById('cartTotal').textContent = total + ' ' + CURRENCY;
+  document.getElementById('checkoutBtn').disabled = items.length === 0;
+}
+function changeQty(id, delta){
+  const c = CART[id];
+  if(!c) return;
+  c.qty = Math.max(0, Math.min(c.qty + delta, c.product.quantity));
+  updateCartBadge();
+  renderCart();
+}
+
+function openCheckout(){
+  if(Object.values(CART).reduce((s,c)=>s+c.qty,0) === 0) return;
+  document.getElementById('checkoutError').textContent = '';
+  document.getElementById('checkoutOverlay').classList.add('show');
+}
+
+async function submitOrder(){
+  const customerName = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+  const notes = document.getElementById('custNotes').value.trim();
+  const errBox = document.getElementById('checkoutError');
+
+  if(!customerName || !phone){
+    errBox.textContent = 'الاسم ورقم الهاتف مطلوبان';
+    return;
+  }
+  const items = Object.values(CART).filter(c=>c.qty>0).map(c => ({ productId: c.product.id, qty: c.qty }));
+  if(items.length === 0){
+    errBox.textContent = 'السلة فارغة';
+    return;
+  }
+
+  document.getElementById('submitOrderBtn').disabled = true;
+  try{
+    const res = await fetch(CONFIG.apiBase.replace(/\/$/,'') + '/api/order/' + encodeURIComponent(CONFIG.shopId), {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ customerName, phone, address, notes, items })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'فشل الإرسال');
+
+    CART = {};
+    updateCartBadge();
+    closeSheet('checkoutOverlay');
+    closeSheet('cartOverlay');
+    document.getElementById('successOrderId').textContent = '#' + data.order.id.slice(-6);
+    document.getElementById('successOverlay').classList.add('show');
+    document.getElementById('custName').value = '';
+    document.getElementById('custPhone').value = '';
+    document.getElementById('custAddress').value = '';
+    document.getElementById('custNotes').value = '';
+    loadStore(); // تحديث الكميات المعروضة
+  }catch(e){
+    // رسائل الخادم المفهومة (كمية غير متوفرة، رقم هاتف غير صحيح...) تُعرض كما هي
+    errBox.textContent = (e && e.message && e.message !== 'فشل الإرسال' && !/Failed to fetch|NetworkError|Load failed|JSON/i.test(e.message))
+      ? e.message
+      : 'تعذّر إرسال الطلب. تأكد من الاتصال بالإنترنت وحاول مجددًا.';
+    loadStore();
+  }
+  document.getElementById('submitOrderBtn').disabled = false;
+}
+
+loadStore();
+setInterval(loadStore, 15000); // تحديث المنتجات والكميات كل 15 ثانية
+</script>
+</body>
+</html>
