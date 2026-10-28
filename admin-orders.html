@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>طلبات المتجر — الإدارة</title>
+<style>
+  :root{--violet:#6d28d9;--violet-dark:#4c1d95;--violet-light:#ede9fe;--gray:#f4f4f6;--text:#1f1b2e;--muted:#6b7280;}
+  *{box-sizing:border-box;}
+  body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--gray);margin:0;color:var(--text);}
+  header{background:linear-gradient(135deg,var(--violet),var(--violet-dark));color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+  header h1{margin:0;font-size:18px;}
+  .container{max-width:900px;margin:0 auto;padding:16px;}
+  .cfgRow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .cfgRow input{flex:1;min-width:160px;padding:9px 12px;border-radius:10px;border:1px solid #ddd;}
+  button{font-family:inherit;}
+  .btn{background:var(--violet);color:#fff;border:none;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:700;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .chip{padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #ddd;cursor:pointer;font-size:13px;}
+  .chip.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+  .order{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;}
+  .id{font-weight:800;color:var(--violet-dark);} .date{font-size:12px;color:var(--muted);}
+  .cust{margin-top:6px;font-size:14px;} .cust a{color:var(--violet-dark);font-weight:700;text-decoration:none;}
+  .items{margin:10px 0;border-top:1px solid #eee;padding-top:8px;}
+  .itemRow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .total{font-weight:800;margin-top:6px;}
+  .statusRow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  select{padding:7px 10px;border-radius:8px;border:1px solid #ddd;font-family:inherit;}
+  .badge{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;}
+  .pending{background:#fef3c7;color:#92400e;} .confirmed{background:#dbeafe;color:#1e40af;} .done{background:#dcfce7;color:#166534;} .cancelled{background:#fee2e2;color:#991b1b;}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px;}
+  #login{max-width:360px;margin:60px auto;background:#fff;border-radius:16px;padding:22px;text-align:center;}
+  #login input{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;margin:12px 0;text-align:center;}
+</style>
+</head>
+<body>
+<header><h1>📦 طلبات المتجر الإلكتروني</h1><button class="btn" style="background:#fff;color:var(--violet-dark)" onclick="logout()" id="logoutBtn" hidden>خروج</button></header>
+
+<div id="login">
+  <h2 style="margin:0">🔒 دخول الإدارة</h2>
+  <p style="color:var(--muted);font-size:13px">أدخل مفتاح الإدارة (ADMIN_KEY)</p>
+  <input id="keyInput" type="password" placeholder="مفتاح الإدارة" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="btn" style="width:100%" onclick="doLogin()">دخول</button>
+  <div id="loginErr" style="color:#b91c1c;font-size:13px;margin-top:10px"></div>
+</div>
+
+<div class="container" id="app" hidden>
+  <div class="cfgRow"><input id="shopId" placeholder="رمز المحل"><button class="btn" onclick="saveShop()">تحميل الطلبات</button></div>
+  <div class="chips" id="chips"></div>
+  <div id="list"></div>
+  <div id="emptyMsg" class="empty" style="display:none;">لا توجد طلبات</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const STATUS={'قيد الانتظار':'pending','مؤكد':'confirmed','تم التسليم':'done','ملغى':'cancelled'};
+let KEY=sessionStorage.getItem('admin_key')||'', SHOP=localStorage.getItem('admin_shop')||(window.SHOP_CONFIG||{}).shopId||'shop1', FILTER='الكل', ORDERS=[], TIMER=null;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const H=()=>({'Content-Type':'application/json','x-admin-key':KEY});
+function show(){ $('login').hidden=true; $('app').hidden=false; $('logoutBtn').hidden=false; $('shopId').value=SHOP; load(); clearInterval(TIMER); TIMER=setInterval(()=>{if(!document.hidden)load();},30000); }
+async function doLogin(){
+  KEY=$('keyInput').value.trim(); if(!KEY) return;
+  const r=await fetch('/api/orders/'+encodeURIComponent(SHOP),{headers:H()}).catch(()=>null);
+  if(!r){ $('loginErr').textContent='تعذّر الاتصال بالخادم'; return; }
+  if(r.status===401){ $('loginErr').textContent='المفتاح غير صحيح'; return; }
+  sessionStorage.setItem('admin_key',KEY); show();
+}
+function logout(){ sessionStorage.removeItem('admin_key'); KEY=''; location.reload(); }
+function saveShop(){ SHOP=$('shopId').value.trim()||'shop1'; localStorage.setItem('admin_shop',SHOP); load(); }
+async function load(){
+  try{
+    const r=await fetch('/api/orders/'+encodeURIComponent(SHOP),{headers:H()});
+    if(r.status===401){ logout(); return; }
+    ORDERS=((await r.json()).orders||[]).sort((a,b)=>b.createdAt-a.createdAt);
+    draw();
+  }catch(e){ $('list').innerHTML=''; $('emptyMsg').style.display='block'; $('emptyMsg').textContent='تعذّر الاتصال بالخادم.'; }
+}
+function draw(){
+  const pend=ORDERS.filter(o=>o.status==='قيد الانتظار').length;
+  document.title=(pend?'('+pend+') ':'')+'طلبات المتجر — الإدارة';
+  const tabs=['الكل',...Object.keys(STATUS)];
+  $('chips').innerHTML=tabs.map(t=>{const n=t==='الكل'?ORDERS.length:ORDERS.filter(o=>o.status===t).length;return `<div class="chip ${t===FILTER?'active':''}" data-t="${esc(t)}">${esc(t)} (${n})</div>`;}).join('');
+  $('chips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{FILTER=c.dataset.t;draw();});
+  const list=ORDERS.filter(o=>FILTER==='الكل'||o.status===FILTER);
+  $('emptyMsg').style.display=list.length?'none':'block'; $('emptyMsg').textContent='لا توجد طلبات';
+  $('list').innerHTML=list.map(o=>`<div class="order">
+    <div class="top"><span class="id">#${esc(String(o.id).slice(-6))}</span><span class="badge ${STATUS[o.status]||'pending'}">${esc(o.status)}</span></div>
+    <div class="date">${new Date(o.createdAt).toLocaleString('ar-DZ')}</div>
+    <div class="cust"><b>${esc(o.customerName)}</b> — <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.address?' — '+esc(o.address):''}</div>
+    ${o.notes?`<div class="cust" style="color:var(--muted)">ملاحظة: ${esc(o.notes)}</div>`:''}
+    <div class="items">${o.items.map(it=>`<div class="itemRow"><span>${esc(it.name)} × ${it.qty}</span><span>${it.price*it.qty}</span></div>`).join('')}</div>
+    <div class="total">المجموع: ${o.total}</div>
+    <div class="statusRow"><label style="font-size:13px;color:var(--muted)">تحديث الحالة:</label>
+      <select data-id="${esc(o.id)}">${Object.keys(STATUS).map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select>
+      <span style="font-size:11px;color:var(--muted)">${o.status==='ملغى'?'':'(الإلغاء يُرجع الكميات للمخزون)'}</span></div></div>`).join('');
+  $('list').querySelectorAll('select').forEach(s=>s.onchange=()=>updateStatus(s.dataset.id,s.value));
+}
+async function updateStatus(id,status){
+  await fetch('/api/order-status/'+encodeURIComponent(SHOP)+'/'+encodeURIComponent(id),{method:'PUT',headers:H(),body:JSON.stringify({status})});
+  load();
+}
+if(KEY) show();
+</script>
+</body>
+</html>

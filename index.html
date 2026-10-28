@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام التسيير والبيع | كاشير المحل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Cairo+Play:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@latest" defer></script>
+<style>
+:root{
+  --bg:#F3F6F5;
+  --surface:#FFFFFF;
+  --surface-2:#FBFCFC;
+  --primary:#0E5C56;
+  --primary-dark:#0A2E2B;
+  --primary-darker:#071F1D;
+  --primary-light:#E3F1EE;
+  --gold:#C9982F;
+  --gold-light:#F7EDD8;
+  --success:#1B8A5A;
+  --success-light:#E5F5EC;
+  --warning:#C77A1E;
+  --warning-light:#FBF0DF;
+  --danger:#C0392B;
+  --danger-light:#FBE7E4;
+  --text:#1E2A28;
+  --text-muted:#65756F;
+  --border:#E1E8E5;
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Cairo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  direction:rtl;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--gold-light);}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#c7d3cf;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:#aebcb7;}
+
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+.app-shell{display:flex;min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:230px;flex:0 0 230px;
+  background:linear-gradient(180deg,var(--primary-dark),var(--primary-darker));
+  color:#EAF3F1;
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+}
+.sidebar-brand{
+  padding:22px 20px 14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.sidebar-brand .name{font-weight:800;font-size:17px;color:#fff;line-height:1.4;}
+.sidebar-brand .sub{font-size:11.5px;color:var(--gold);margin-top:2px;letter-spacing:.3px;}
+.nav-list{list-style:none;margin:0;padding:14px 10px;flex:1;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;margin-bottom:4px;border-radius:10px;
+  color:#CFE3DE;font-size:14.5px;font-weight:600;
+  transition:background .15s ease,color .15s ease;
+  border:1px solid transparent;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:rgba(201,152,47,.16);border-color:rgba(201,152,47,.4);color:#F4DFA6;}
+.nav-item .ic{width:19px;text-align:center;flex:0 0 19px;font-size:16px;}
+.nav-item.locked-item{opacity:.9;}
+.nav-item .lock-badge{margin-inline-start:auto;font-size:11px;opacity:.75;}
+.sidebar-foot{padding:14px 18px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:11.5px;color:#8FA9A3;}
+
+/* ---------- Main ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 26px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;
+}
+.topbar h1{font-size:19px;margin:0;font-weight:800;color:var(--primary-dark);}
+.topbar .clock{font-size:13px;color:var(--text-muted);font-weight:600;}
+.content{padding:22px 26px 60px;flex:1;}
+
+/* ---------- Cards / Grid ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;position:relative;overflow:hidden;
+}
+.stat-card .lbl{font-size:12.5px;color:var(--text-muted);font-weight:700;margin-bottom:6px;}
+.stat-card .val{font-size:22px;font-weight:800;color:var(--primary-dark);}
+.stat-card .bar{position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;}
+.stat-card.c-primary .bar{background:var(--primary);}
+.stat-card.c-gold .bar{background:var(--gold);}
+.stat-card.c-success .bar{background:var(--success);}
+.stat-card.c-warning .bar{background:var(--warning);}
+.stat-card.c-danger .bar{background:var(--danger);}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.panel-head h3{margin:0;font-size:15.5px;font-weight:800;color:var(--primary-dark);}
+.panel-head .hint{font-size:12px;color:var(--text-muted);}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:right;padding:9px 10px;color:var(--text-muted);font-weight:700;font-size:12.5px;border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.tbl-wrap{overflow-x:auto;}
+.empty-row{text-align:center;color:var(--text-muted);padding:26px 10px;font-size:13.5px;}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+.badge.success{background:var(--success-light);color:var(--success);}
+.badge.warning{background:var(--warning-light);color:var(--warning);}
+.badge.danger{background:var(--danger-light);color:var(--danger);}
+.badge.neutral{background:var(--primary-light);color:var(--primary);}
+.badge.gold{background:var(--gold-light);color:#8a6a1f;}
+
+.btn{
+  border:none;border-radius:9px;padding:9px 16px;font-weight:700;font-size:13.5px;
+  display:inline-flex;align-items:center;gap:7px;transition:filter .15s,transform .05s;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-gold{background:var(--gold);color:#3a2c08;}
+.btn-gold:hover{filter:brightness(1.06);}
+.btn-outline{background:#fff;color:var(--primary-dark);border:1.5px solid var(--border);}
+.btn-outline:hover{border-color:var(--primary);}
+.btn-danger{background:var(--danger-light);color:var(--danger);}
+.btn-danger:hover{background:#f5d2cd;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{filter:brightness(1.08);}
+.btn-sm{padding:6px 11px;font-size:12.5px;border-radius:7px;}
+.btn-icon{padding:7px 9px;border-radius:7px;}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--text-muted);margin-bottom:5px;}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;
+  background:var(--surface-2);color:var(--text);
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:#fff;}
+.field .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field small.help{display:block;margin-top:4px;color:var(--text-muted);font-size:11.5px;}
+
+.search-box{position:relative;}
+.search-box input{padding-inline-start:36px;}
+.search-box .sic{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);}
+
+/* ---------- Modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(10,25,23,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(1px);}
+.hidden{display:none !important;}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal.wide{max-width:760px;}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{margin:0;font-size:16.5px;font-weight:800;color:var(--primary-dark);}
+.modal-head .x{cursor:pointer;color:var(--text-muted);font-size:20px;line-height:1;padding:4px;}
+.modal-body{padding:20px 22px;overflow-y:auto;}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+/* ---------- Toast ---------- */
+#toastHost{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{padding:11px 20px;border-radius:10px;font-size:13.5px;font-weight:700;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.18);animation:toastIn .18s ease;}
+.toast.info{background:var(--primary-dark);}
+.toast.success{background:var(--success);}
+.toast.warning{background:var(--warning);}
+.toast.danger{background:var(--danger);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- POS layout ---------- */
+.pos-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start;}
+.pos-products{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px;}
+.cat-tab{padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:700;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-muted);}
+.cat-tab.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary);}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px;max-height:62vh;overflow-y:auto;padding-inline-end:4px;}
+.product-card{
+  border:1.5px solid var(--border);border-radius:11px;padding:10px;background:var(--surface-2);
+  text-align:right;transition:border-color .12s, transform .05s;
+}
+.product-card:hover{border-color:var(--primary);}
+.product-card:active{transform:scale(.98);}
+.product-card .pname{font-weight:700;font-size:13px;margin-bottom:6px;min-height:34px;line-height:1.3;}
+.product-card .pprice{color:var(--primary);font-weight:800;font-size:14px;}
+.product-card .pqty{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.product-card.out{opacity:.45;}
+
+.cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:sticky;top:82px;}
+.cart-items{max-height:32vh;overflow-y:auto;margin:10px 0;}
+.cart-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.cart-item:last-child{border-bottom:none;}
+.cart-item .ci-name{flex:1;font-size:13px;font-weight:700;}
+.cart-item .ci-price{font-size:11.5px;color:var(--text-muted);}
+.qty-ctrl{display:flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:8px;padding:3px;}
+.qty-ctrl button{width:22px;height:22px;border-radius:6px;border:none;background:#fff;font-weight:800;color:var(--primary);}
+.qty-ctrl span{min-width:22px;text-align:center;font-weight:700;font-size:13px;}
+.ci-total{font-weight:800;font-size:13px;min-width:64px;text-align:left;}
+.ci-remove{color:var(--danger);font-size:15px;padding:2px 4px;}
+
+.totals-box{border-top:2px dashed var(--border);margin-top:8px;padding-top:10px;}
+.tr-line{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;color:var(--text-muted);}
+.tr-line.grand{font-size:19px;font-weight:800;color:var(--primary-dark);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+
+.pay-toggle{display:flex;gap:8px;margin:12px 0;}
+.pay-toggle label{flex:1;text-align:center;padding:9px;border:1.5px solid var(--border);border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;color:var(--text-muted);}
+.pay-toggle input{display:none;}
+.pay-toggle input:checked + span{color:var(--primary);}
+.pay-toggle label:has(input:checked){border-color:var(--primary);background:var(--primary-light);color:var(--primary);}
+
+/* ---------- Login / PIN ---------- */
+.pin-lock{max-width:340px;margin:60px auto;text-align:center;background:#fff;border:1px solid var(--border);border-radius:16px;padding:30px 26px;}
+.pin-lock .lockic{font-size:34px;margin-bottom:10px;}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:16px 0;}
+.pin-dots span{width:13px;height:13px;border-radius:50%;background:var(--border);}
+.pin-dots span.filled{background:var(--primary);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:230px;margin:0 auto;}
+.pin-pad button{padding:14px 0;border-radius:12px;border:1.5px solid var(--border);background:#fff;font-size:18px;font-weight:700;color:var(--primary-dark);}
+.pin-pad button:active{background:var(--primary-light);}
+
+/* ---------- Receipt / print ---------- */
+#receiptArea{display:none;}
+.receipt-view{width:280px;font-family:'Cairo',sans-serif;color:#111;padding:6px;}
+.receipt-view h2{text-align:center;font-size:16px;margin:0 0 2px;}
+.receipt-view .sub{text-align:center;font-size:11px;color:#444;margin-bottom:8px;}
+.receipt-view table{width:100%;font-size:11.5px;border-collapse:collapse;}
+.receipt-view th,.receipt-view td{padding:3px 2px;border:none;}
+.receipt-view .rline{border-top:1px dashed #999;margin:6px 0;}
+.receipt-view .rtot{display:flex;justify-content:space-between;font-size:12.5px;margin:2px 0;}
+.receipt-view .rtot.big{font-weight:800;font-size:14px;}
+.receipt-view .rfoot{text-align:center;margin-top:10px;font-size:11px;color:#333;}
+
+@media print{
+  body *{visibility:hidden;}
+  #receiptArea, #receiptArea *{visibility:visible;}
+  #receiptArea{display:block !important;position:absolute;top:0;right:0;left:0;}
+}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+.empty-state .ic{font-size:34px;margin-bottom:8px;}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+.link-btn{background:none;border:none;color:var(--primary);font-weight:700;font-size:12.5px;padding:0;}
+.mini-note{font-size:11.5px;color:var(--text-muted);}
+
+@media (max-width:980px){
+  .pos-grid{grid-template-columns:1fr;}
+  .cart-panel{position:static;}
+  .sidebar{width:74px;flex-basis:74px;}
+  .sidebar-brand .sub, .sidebar-brand .name, .nav-item span.lbl, .lock-badge{display:none;}
+  .nav-item{justify-content:center;}
+  .content{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="name" id="brandName">متجري</div>
+      <div class="sub">نظام تسيير المحل</div>
+    </div>
+    <ul class="nav-list" id="navList"></ul>
+    <div class="sidebar-foot">النسخة 2.0 · دعم حاسوبين ومزامنة شبكة</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">لوحة التحكم</h1>
+      <div class="clock" id="clockBox"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+<div id="modalHost"></div>
+<div id="receiptArea"></div>
+
+<script>
+/* =========================================================
+   الحالة والتخزين المحلي  |  STATE & LOCAL STORAGE
+   ========================================================= */
+const STORAGE_KEY = 'shop_pos_state_v1';
+
+function defaultState(){
+  return {
+    settings:{
+      shopName:'متجري',
+      currency:'دج',
+      lowStock:5,
+      expiryDays:30,
+      defaultMargin:30,
+      debtPin:'1234'
+    },
+    products:[],
+    customers:[],
+    suppliers:[],
+    sales:[],
+    expenses:[],
+    debtLedger:[],
+    purchaseInvoices:[]
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      const def = defaultState();
+      return Object.assign(def, parsed, {settings:Object.assign(def.settings, parsed.settings||{})});
+    }
+  }catch(e){ console.error('تعذر قراءة البيانات المحفوظة', e); }
+  return defaultState();
+}
+
+let state = loadState();
+/* =========================================================
+   مزامنة بين حاسوبين عبر الشبكة المحلية | LAN SYNC
+   ========================================================= */
+const SYNC_KEY = 'shop_pos_sync_config_v1';
+let syncConfig = Object.assign({enabled:false, serverUrl:(location.protocol==='http:'||location.protocol==='https:')?location.origin:'http://localhost:3000', shopId:'shop1', userName:'الكاشير', key:''}, (()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY)||'{}')}catch(e){return {}}})());
+function syncHeaders(extra){ return Object.assign({}, extra||{}, {'x-sync-key': syncConfig.key||''}); }
+function hasLocalData(){ return (state.products||[]).length>0 || (state.sales||[]).length>0 || (state.customers||[]).length>0; }
+let syncTimer = null, syncBusy = false, syncSuppress = false, syncPending = false, lastRemoteVersion = 0, lastSyncedState = null;
+function saveSyncConfig(){
+  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig)); }catch(e){}
+}
+function normalizeServerUrl(v){ return (v||'').trim().replace(/\/$/,''); }
+function setSyncStatus(text, type='muted'){
+  const el=$('#syncStatus'); if(!el) return;
+  el.textContent=text;
+  el.className='hint '+(type==='ok'?'sync-ok':type==='bad'?'sync-bad':'');
+}
+async function syncPush(){
+  if(!syncConfig.enabled || syncBusy || !syncPending) return;
+  const url=normalizeServerUrl(syncConfig.serverUrl); if(!url) return;
+  syncBusy=true; syncPending=false;
+  try{
+    const payload={state,baseState:lastSyncedState||state,client:syncConfig.userName,baseVersion:lastRemoteVersion};
+    const res=await fetch(url+'/api/state/'+encodeURIComponent(syncConfig.shopId),{method:'PUT',headers:syncHeaders({'Content-Type':'application/json'}),body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error||'sync failed');
+    syncSuppress=true;
+    state=data.state||state;
+    lastSyncedState=JSON.parse(JSON.stringify(state));
+    lastRemoteVersion=data.version||lastRemoteVersion;
+    try{localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}catch(e){}
+    syncSuppress=false;
+    renderSidebar(); renderView();
+    setSyncStatus('● متصل — آخر مزامنة الآن','ok');
+  }catch(e){ setSyncStatus(syncErrText(e),'bad'); }
+  finally{ syncBusy=false; if(syncPending) setTimeout(syncPush,300); }
+}
+function syncErrText(e){
+  const m=(e&&e.message)||'';
+  if(m.indexOf('مفتاح')>-1 || m.indexOf('SYNC_KEY')>-1) return '● '+m;
+  return '● غير متصل — البيانات محفوظة محليًا';
+}
+async function syncPull(showToast=false){
+  if(!syncConfig.enabled || syncBusy || syncPending) return;
+  const url=normalizeServerUrl(syncConfig.serverUrl); if(!url) return;
+  syncBusy=true;
+  try{
+    const res=await fetch(url+'/api/state/'+encodeURIComponent(syncConfig.shopId),{headers:syncHeaders()});
+    const data=await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error||'sync failed');
+    if(!data.state && hasLocalData()){
+      // الخادم فارغ (مثلاً أُعيد تشغيله) وعند هذا الكاشير بيانات: نرفعها لإعادة بناء المتجر
+      syncPending=true;
+    }
+    if(data.state && (data.version||0)!==lastRemoteVersion){
+      syncSuppress=true;
+      state=Object.assign(defaultState(), data.state, {settings:Object.assign(defaultState().settings, data.state.settings||{})});
+      lastRemoteVersion=data.version||0;
+      lastSyncedState=JSON.parse(JSON.stringify(state));
+      try{localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}catch(e){}
+      syncSuppress=false;
+      renderSidebar(); renderView();
+      if(showToast) toast('تم جلب البيانات المشتركة من الحاسوب الآخر','success');
+    }
+    setSyncStatus('● متصل — البيانات مشتركة','ok');
+  }catch(e){ setSyncStatus(syncErrText(e),'bad'); }
+  finally{ syncBusy=false; if(syncPending) setTimeout(syncPush,50); }
+}
+function requestSync(){
+  if(syncConfig.enabled && !syncSuppress){ syncPending=true; clearTimeout(syncTimer); syncTimer=setTimeout(syncPush,350); }
+}
+function startSync(){
+  clearInterval(window.__posSyncInterval);
+  if(!syncConfig.enabled) return;
+  syncPull(false);
+  window.__posSyncInterval=setInterval(()=>syncPull(false),2000);
+}
+async function testSync(){
+  syncConfig.enabled=true; syncConfig.serverUrl=normalizeServerUrl($('#syncServerUrl')?.value||syncConfig.serverUrl); syncConfig.shopId=($('#syncShopId')?.value||syncConfig.shopId).trim(); syncConfig.userName=($('#syncUserName')?.value||syncConfig.userName).trim()||'الكاشير';
+  syncConfig.key=($('#syncKey')?.value||syncConfig.key||'').trim();
+  saveSyncConfig();
+  try{
+    const res=await fetch(syncConfig.serverUrl+'/api/ping',{headers:syncHeaders()}); const data=await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error||'');
+    setSyncStatus('● الاتصال ناجح — اضغط حفظ وتفعيل','ok');
+    toast('الاتصال بالخادم ناجح','success');
+  }catch(e){
+    const m=(e&&e.message)||'';
+    setSyncStatus(m?('● '+m):'● فشل الاتصال بالخادم','bad');
+    toast(m || 'تأكد من عنوان الخادم وأنه يعمل','danger');
+  }
+}
+function saveSyncSettings(){
+  syncConfig.enabled=$('#syncEnabled')?.checked===true;
+  syncConfig.serverUrl=normalizeServerUrl($('#syncServerUrl')?.value||'');
+  syncConfig.shopId=($('#syncShopId')?.value||'').trim()||'shop1';
+  syncConfig.userName=($('#syncUserName')?.value||'').trim()||'الكاشير';
+  syncConfig.key=($('#syncKey')?.value||'').trim();
+  saveSyncConfig();
+  startSync();
+  if(syncConfig.enabled) syncPending=true, syncPush();
+  setSyncStatus(syncConfig.enabled?'● جارِ الاتصال...':'● المزامنة متوقفة', syncConfig.enabled?'muted':'bad');
+  toast(syncConfig.enabled?'تم تفعيل المزامنة بين الحواسيب':'تم إيقاف المزامنة','success');
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ toast('تعذر حفظ البيانات (المساحة ممتلئة؟)','danger'); }
+  requestSync();
+}
+
+/* =========================================================
+   أدوات مساعدة  |  UTILITIES
+   ========================================================= */
+function uid(prefix){ return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function $(sel,root){ return (root||document).querySelector(sel); }
+function esc(str){ return String(str==null?'':str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtMoney(n){
+  n = Number(n)||0;
+  const parts = (Math.round(n*100)/100).toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  let s = parts[1]==='00' ? parts[0] : parts.join('.');
+  return s + ' ' + state.settings.currency;
+}
+function fmtNum(n){ return (Math.round((Number(n)||0)*100)/100).toString(); }
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' - '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function isToday(iso){ return (iso||'').slice(0,10) === todayStr(); }
+function isThisMonth(iso){
+  const d = new Date(iso), n = new Date();
+  return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth();
+}
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const d = new Date(dateStr+'T00:00:00');
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d-t)/86400000);
+}
+
+function toast(msg, type){
+  type = type || 'info';
+  const host = $('#toastHost');
+  const el = document.createElement('div');
+  el.className = 'toast '+type;
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(),250); }, 2400);
+}
+
+function openModal(title, bodyHtml, footHtml, opts){
+  opts = opts||{};
+  const host = $('#modalHost');
+  host.innerHTML = `
+    <div class="overlay" id="activeOverlay">
+      <div class="modal ${opts.wide?'wide':''}">
+        <div class="modal-head">
+          <h3>${title}</h3>
+          <div class="x" onclick="closeModal()">✕</div>
+        </div>
+        <div class="modal-body">${bodyHtml}</div>
+        ${footHtml ? `<div class="modal-foot">${footHtml}</div>` : ''}
+      </div>
+    </div>`;
+  $('#activeOverlay').addEventListener('mousedown', function(e){ if(e.target===this) closeModal(); });
+}
+function closeModal(){ $('#modalHost').innerHTML=''; }
+
+/* =========================================================
+   التنقّل بين الصفحات  |  NAVIGATION
+   ========================================================= */
+const NAV = [
+  {id:'dashboard', label:'لوحة التحكم', ic:'📊'},
+  {id:'pos', label:'نقطة البيع', ic:'🧾'},
+  {id:'products', label:'المنتجات والمخزون', ic:'📦'},
+  {id:'sales', label:'سجل المبيعات', ic:'🗂️'},
+  {id:'debts', label:'الديون', ic:'🔒', locked:true},
+  {id:'expenses', label:'المصاريف اليومية', ic:'💸'},
+  {id:'contacts', label:'الزبائن والموردون', ic:'👥'},
+  {id:'settings', label:'الإعدادات', ic:'⚙️'}
+];
+let currentView = 'dashboard';
+let debtUnlocked = false;
+
+function renderSidebar(){
+  $('#brandName').textContent = state.settings.shopName || 'متجري';
+  $('#navList').innerHTML = NAV.map(item=>`
+    <li class="nav-item ${item.id===currentView?'active':''} ${item.locked?'locked-item':''}" onclick="navigate('${item.id}')">
+      <span class="ic">${item.ic}</span><span class="lbl">${item.label}</span>
+      ${item.locked ? `<span class="lock-badge">${debtUnlocked?'🔓':'🔒'}</span>` : ''}
+    </li>`).join('');
+}
+
+function navigate(view){
+  currentView = view;
+  const item = NAV.find(n=>n.id===view);
+  $('#pageTitle').textContent = item ? item.label : '';
+  renderSidebar();
+  renderView();
+}
+
+function renderView(){
+  const c = $('#content');
+  if(currentView==='dashboard') c.innerHTML = viewDashboard();
+  else if(currentView==='pos') { c.innerHTML = viewPOS(); afterRenderPOS(); }
+  else if(currentView==='products') c.innerHTML = viewProducts();
+  else if(currentView==='sales') c.innerHTML = viewSales();
+  else if(currentView==='debts') c.innerHTML = viewDebts();
+  else if(currentView==='expenses') c.innerHTML = viewExpenses();
+  else if(currentView==='contacts') c.innerHTML = viewContacts();
+  else if(currentView==='settings') c.innerHTML = viewSettings();
+}
+
+/* =========================================================
+   لوحة التحكم  |  DASHBOARD
+   ========================================================= */
+function computeDashboardStats(){
+  const salesToday = state.sales.filter(s=>isToday(s.date));
+  const totalToday = salesToday.reduce((a,s)=>a+s.total,0);
+  const profitToday = salesToday.reduce((a,s)=>a+s.items.reduce((x,i)=>x+(i.price-i.cost)*i.qty,0),0);
+  const salesMonth = state.sales.filter(s=>isThisMonth(s.date));
+  const totalMonth = salesMonth.reduce((a,s)=>a+s.total,0);
+  const profitMonth = salesMonth.reduce((a,s)=>a+s.items.reduce((x,i)=>x+(i.price-i.cost)*i.qty,0),0);
+  const inventoryValue = state.products.reduce((a,p)=>a+p.purchasePrice*p.quantity,0);
+  const inventoryRetail = state.products.reduce((a,p)=>a+p.sellPrice*p.quantity,0);
+  const lowStock = state.products.filter(p=>p.quantity<=p.minStock);
+  const expiring = state.products.filter(p=>p.expiryDate && daysUntil(p.expiryDate)<=state.settings.expiryDays);
+  const totalDebts = state.customers.reduce((a,c)=>a+(c.debt||0),0);
+  const expensesToday = state.expenses.filter(e=>isToday(e.date)).reduce((a,e)=>a+e.amount,0);
+  return {totalToday,profitToday,totalMonth,profitMonth,inventoryValue,inventoryRetail,lowStock,expiring,totalDebts,expensesToday};
+}
+
+function viewDashboard(){
+  const s = computeDashboardStats();
+  const recentSales = [...state.sales].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  return `
+  <div class="stat-grid">
+    <div class="stat-card c-primary"><div class="bar"></div><div class="lbl">مبيعات اليوم</div><div class="val">${fmtMoney(s.totalToday)}</div></div>
+    <div class="stat-card c-success"><div class="bar"></div><div class="lbl">ربح اليوم التقريبي</div><div class="val">${fmtMoney(s.profitToday)}</div></div>
+    <div class="stat-card c-gold"><div class="bar"></div><div class="lbl">قيمة المخزون (تكلفة)</div><div class="val">${fmtMoney(s.inventoryValue)}</div></div>
+    <div class="stat-card c-primary"><div class="bar"></div><div class="lbl">قيمة المخزون (بيع)</div><div class="val">${fmtMoney(s.inventoryRetail)}</div></div>
+    <div class="stat-card c-warning"><div class="bar"></div><div class="lbl">منتجات منخفضة/نافذة</div><div class="val">${s.lowStock.length}</div></div>
+    <div class="stat-card c-danger"><div class="bar"></div><div class="lbl">تقارب/انتهاء صلاحية</div><div class="val">${s.expiring.length}</div></div>
+    <div class="stat-card c-danger"><div class="bar"></div><div class="lbl">إجمالي ديون الزبائن</div><div class="val">${fmtMoney(s.totalDebts)}</div></div>
+    <div class="stat-card c-warning"><div class="bar"></div><div class="lbl">مصاريف اليوم</div><div class="val">${fmtMoney(s.expensesToday)}</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>هذا الشهر</h3><span class="hint">إجمالي المبيعات والأرباح التقديرية</span></div>
+    <div style="display:flex;gap:30px;flex-wrap:wrap;">
+      <div><div class="mini-note">إجمالي المبيعات</div><div style="font-size:20px;font-weight:800;color:var(--primary-dark)">${fmtMoney(s.totalMonth)}</div></div>
+      <div><div class="mini-note">الربح التقريبي</div><div style="font-size:20px;font-weight:800;color:var(--success)">${fmtMoney(s.profitMonth)}</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>⚠️ منتجات تحتاج انتباه</h3>
+      <span class="hint">كمية منخفضة أو قاربت على الانتهاء</span>
+    </div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>المنتج</th><th>الكمية</th><th>الحد الأدنى</th><th>الصلاحية</th><th>الحالة</th></tr></thead>
+      <tbody>
+        ${(()=>{
+          const flagged = state.products.filter(p=> p.quantity<=p.minStock || (p.expiryDate && daysUntil(p.expiryDate)<=state.settings.expiryDays));
+          if(flagged.length===0) return `<tr><td colspan="5" class="empty-row">لا توجد تنبيهات حاليًا 👍</td></tr>`;
+          return flagged.map(p=>{
+            const d = p.expiryDate ? daysUntil(p.expiryDate) : null;
+            let stockBadge = p.quantity<=0 ? `<span class="badge danger">نفذ</span>` : (p.quantity<=p.minStock ? `<span class="badge warning">منخفض</span>` : `<span class="badge success">جيد</span>`);
+            let expBadge = '';
+            if(d!==null){
+              if(d<0) expBadge = `<span class="badge danger">منتهي منذ ${Math.abs(d)} يوم</span>`;
+              else if(d<=state.settings.expiryDays) expBadge = `<span class="badge warning">باقي ${d} يوم</span>`;
+            }
+            return `<tr>
+              <td>${esc(p.name)}</td><td>${fmtNum(p.quantity)} ${esc(p.unit||'')}</td><td>${fmtNum(p.minStock)}</td>
+              <td>${fmtDate(p.expiryDate)}</td><td>${stockBadge} ${expBadge}</td>
+            </tr>`;
+          }).join('');
+        })()}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>آخر العمليات</h3><button class="link-btn" onclick="navigate('sales')">عرض الكل ←</button></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>رقم</th><th>التاريخ</th><th>الإجمالي</th><th>طريقة الدفع</th></tr></thead>
+      <tbody>
+        ${recentSales.length===0 ? `<tr><td colspan="4" class="empty-row">لا توجد مبيعات مسجلة بعد</td></tr>` :
+          recentSales.map(sale=>`<tr>
+            <td>#${sale.id.slice(-5)}</td><td>${fmtDateTime(sale.date)}</td><td>${fmtMoney(sale.total)}</td>
+            <td>${sale.mode==='cash'?'<span class="badge success">نقدًا</span>':'<span class="badge warning">دين</span>'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  `;
+}
+
+/* =========================================================
+   نقطة البيع  |  POS
+   ========================================================= */
+let cart = [];
+let posCategory = 'الكل';
+let posSelectedCustomer = '';
+
+function getCategories(){
+  const set = new Set(state.products.map(p=>p.category).filter(Boolean));
+  return ['الكل', ...Array.from(set)];
+}
+
+function viewPOS(){
+  return `
+  <div class="pos-grid">
+    <div class="pos-products">
+      <div style="display:flex;gap:8px;">
+        <div class="search-box" style="flex:1;">
+          <span class="sic">🔎</span>
+          <input id="posSearch" placeholder="ابحث بالاسم أو امسح الباركود ثم Enter..." oninput="renderPOSGrid()" onkeydown="if(event.key==='Enter'){App.posSearchEnter();}">
+        </div>
+        <button class="btn btn-gold" onclick="App.openCameraScanModal()" title="مسح بكاميرا الهاتف">📷 مسح بالكاميرا</button>
+      </div>
+      <div class="cat-tabs" id="catTabs"></div>
+      <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <div class="cart-panel">
+      <h3 style="margin:0 0 6px;font-size:15.5px;color:var(--primary-dark)">🛒 سلة الشراء</h3>
+      <div class="field" style="margin-bottom:8px;">
+        <label>الزبون (اختياري للنقد / إلزامي للدين)</label>
+        <select id="posCustomerSelect" onchange="posSetCustomer(this.value)">
+          <option value="">— بدون زبون —</option>
+          ${state.customers.map(c=>`<option value="${c.id}" ${posSelectedCustomer===c.id?'selected':''}>${esc(c.name)} ${c.debt>0?'(دين: '+fmtMoney(c.debt)+')':''}</option>`).join('')}
+        </select>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="totals-box" id="totalsBox"></div>
+
+      <div class="pay-toggle">
+        <label><input type="radio" name="payMode" value="cash" checked onchange="renderTotals()"><span>💵 دفع نقدًا</span></label>
+        <label><input type="radio" name="payMode" value="debt" onchange="renderTotals()"><span>📒 تسجيل كدين</span></label>
+      </div>
+
+      <div id="payFields"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-outline" style="flex:1" onclick="App.clearCart()">إفراغ السلة</button>
+        <button class="btn btn-primary" style="flex:2" onclick="App.completeSale()">إتمام البيع ✅</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function afterRenderPOS(){
+  renderCatTabs();
+  renderPOSGrid();
+  renderCart();
+  setTimeout(()=>{ const el=$('#posSearch'); if(el) el.focus(); },30);
+}
+
+function renderCatTabs(){
+  const cats = getCategories();
+  $('#catTabs').innerHTML = cats.map(c=>`<div class="cat-tab ${posCategory===c?'active':''}" onclick="posSetCategory('${esc(c).replace(/'/g,"\\'")}')">${esc(c)}</div>`).join('');
+}
+function posSetCategory(c){ posCategory=c; renderCatTabs(); renderPOSGrid(); }
+function posSetCustomer(id){ posSelectedCustomer = id; renderTotals(); }
+
+function renderPOSGrid(){
+  const q = ($('#posSearch') ? $('#posSearch').value.trim().toLowerCase() : '');
+  let list = state.products.filter(p=>{
+    const matchCat = posCategory==='الكل' || p.category===posCategory;
+    const matchQ = !q || p.name.toLowerCase().includes(q) || (p.barcode||'').toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  const grid = $('#productGrid');
+  if(!grid) return;
+  if(list.length===0){ grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="ic">📦</div>لا توجد منتجات مطابقة</div>`; return; }
+  grid.innerHTML = list.map(p=>`
+    <div class="product-card ${p.quantity<=0?'out':''}" onclick="${p.quantity>0?`App.addToCart('${p.id}')`:''}">
+      <div class="pname">${esc(p.name)}</div>
+      <div class="pprice">${fmtMoney(p.sellPrice)}</div>
+      <div class="pqty">المتوفر: ${fmtNum(p.quantity)} ${esc(p.unit||'')}</div>
+    </div>`).join('');
+}
+
+function posSearchEnter(){
+  const input = $('#posSearch');
+  const val = input.value.trim();
+  if(!val) return;
+  const p = state.products.find(x=>x.barcode && x.barcode===val);
+  if(p){
+    processScannedBarcode(val, {silentIfMissing:true});
+    input.value=''; renderPOSGrid();
+  }
+}
+
+/* معالجة موحّدة لأي باركود قادم من: ماسح USB، الكاميرا، أو كتابة يدوية */
+function processScannedBarcode(code, opts){
+  opts = opts || {};
+  const p = state.products.find(x=>x.barcode===code);
+  if(!p){
+    if(!opts.silentIfMissing) toast('لا يوجد منتج بهذا الباركود: '+code,'warning');
+    return;
+  }
+  if(p.quantity<=0){ toast('هذا المنتج نافذ من المخزون: '+p.name,'warning'); return; }
+  addToCart(p.id);
+  toast('تمت إضافة: '+p.name,'success');
+  renderPOSGrid();
+}
+
+/* ---- مسح الباركود بالكاميرا: يعمل تلقائيًا مع كاميرا الهاتف الخلفية أو كاميرا الحاسوب (ويب كام) بنفس الطريقة ---- */
+let cameraReaderControls = null;
+let cameraReaderInstance = null;
+function openCameraScanModal(){
+  if(currentView!=='pos') navigate('pos');
+  if(typeof ZXing === 'undefined'){
+    toast('تعذر تحميل خاصية الكاميرا — تأكد من الاتصال بالإنترنت عند أول استخدام','danger');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('متصفحك لا يدعم الوصول إلى الكاميرا','danger');
+    return;
+  }
+  const host = $('#modalHost');
+  host.innerHTML = `
+    <div class="overlay" id="cameraOverlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>📷 مسح الباركود بالكاميرا</h3>
+          <div class="x" onclick="App.closeCameraScan()">✕</div>
+        </div>
+        <div class="modal-body">
+          <video id="cameraVideo" style="width:100%;border-radius:10px;background:#000;display:block;" muted playsinline autoplay></video>
+          <div class="field" id="cameraSelectWrap" style="margin-top:12px;display:none;">
+            <label>اختيار الكاميرا</label>
+            <select id="cameraSelect" onchange="App.switchCameraDevice(this.value)"></select>
+          </div>
+          <p class="mini-note" style="margin-top:10px;text-align:center;">قرّب الباركود لمسافة 10-15 سم، في إضاءة جيدة وبثبات لثانية — سيُضاف المنتج تلقائيًا للسلة بمجرد التعرّف عليه.</p>
+        </div>
+        <div class="modal-foot"><button class="btn btn-outline" onclick="App.closeCameraScan()">إغلاق</button></div>
+      </div>
+    </div>`;
+  $('#cameraOverlay').addEventListener('mousedown', function(e){ if(e.target===this) closeCameraScan(); });
+
+  try{
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.ITF, ZXing.BarcodeFormat.CODABAR,
+      ZXing.BarcodeFormat.QR_CODE
+    ]);
+    cameraReaderInstance = new ZXing.BrowserMultiFormatReader(hints);
+  }
+  catch(e){ toast('تعذر تشغيل مكتبة المسح','danger'); closeCameraScan(); return; }
+
+  startCameraDecode(); // بدء تلقائي: يفضّل الكاميرا الخلفية على الهاتف، ويستعمل الويب كام الافتراضية على الحاسوب دون أي إعداد إضافي
+}
+
+function startCameraDecode(deviceId){
+  const videoEl = $('#cameraVideo');
+  if(!videoEl || !cameraReaderInstance) return;
+  const onResult = function(result, err, controls){
+    cameraReaderControls = controls;
+    if(result){
+      const code = result.getText();
+      controls.stop();
+      cameraReaderControls = null;
+      closeModal();
+      processScannedBarcode(code);
+    }
+  };
+  const afterStart = function(){
+    // بعد منح الإذن، أسماء الكاميرات تصبح متاحة — نعرض قائمة اختيار إذا وُجد أكثر من كاميرا (مفيد للحاسوب بعدة كاميرات، أو للتبديل يدويًا على الهاتف)
+    ZXing.BrowserCodeReader.listVideoInputDevices().then(function(devices){
+      const wrap = $('#cameraSelectWrap'), sel = $('#cameraSelect');
+      if(!wrap || !sel || devices.length<=1) return;
+      sel.innerHTML = devices.map((d,i)=>`<option value="${d.deviceId}">${esc(d.label || ('كاميرا '+(i+1)))}</option>`).join('');
+      if(deviceId) sel.value = deviceId;
+      wrap.style.display = 'block';
+    }).catch(function(){});
+  };
+
+  if(deviceId){
+    cameraReaderInstance.decodeFromVideoDevice(deviceId, videoEl, onResult).then(afterStart).catch(function(){
+      toast('تعذر تشغيل هذه الكاميرا','danger');
+    });
+  } else {
+    // محاولة موحّدة: نطلب كاميرا خلفية "إن وُجدت" بجودة جيدة، وإلا يستعمل المتصفح الكاميرا المتوفرة تلقائيًا (كويب كام الحاسوب)
+    cameraReaderInstance.decodeFromConstraints(
+      {video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}}},
+      videoEl, onResult
+    )
+      .then(afterStart)
+      .catch(function(){
+        // fallback: أي كاميرا متاحة بدون شرط الاتجاه أو الجودة
+        cameraReaderInstance.decodeFromVideoDevice(undefined, videoEl, onResult).then(afterStart).catch(function(){
+          toast('تعذر تشغيل الكاميرا — تحقق من إذن الوصول إليها','danger');
+          closeCameraScan();
+        });
+      });
+  }
+}
+
+function switchCameraDevice(deviceId){
+  if(cameraReaderControls){ try{ cameraReaderControls.stop(); }catch(e){} cameraReaderControls=null; }
+  startCameraDecode(deviceId);
+}
+
+function closeCameraScan(){
+  if(cameraReaderControls){ try{ cameraReaderControls.stop(); }catch(e){} cameraReaderControls = null; }
+  cameraReaderInstance = null;
+  $('#modalHost').innerHTML = '';
+}
+
+function addToCart(productId){
+  const p = state.products.find(x=>x.id===productId);
+  if(!p) return;
+  const existing = cart.find(i=>i.productId===productId);
+  const inCartQty = existing ? existing.qty : 0;
+  if(inCartQty+1 > p.quantity){ toast('الكمية المتوفرة غير كافية','warning'); return; }
+  if(existing) existing.qty += 1;
+  else cart.push({productId:p.id, name:p.name, price:p.sellPrice, cost:p.purchasePrice, qty:1});
+  renderCart();
+}
+function changeCartQty(productId, delta){
+  const item = cart.find(i=>i.productId===productId);
+  if(!item) return;
+  const p = state.products.find(x=>x.id===productId);
+  const newQty = item.qty+delta;
+  if(newQty<=0){ cart = cart.filter(i=>i.productId!==productId); }
+  else if(p && newQty>p.quantity){ toast('الكمية المتوفرة غير كافية','warning'); return; }
+  else { item.qty = newQty; }
+  renderCart();
+}
+function removeCartItem(productId){ cart = cart.filter(i=>i.productId!==productId); renderCart(); }
+function clearCart(){ cart=[]; posDiscountType='amount'; renderCart(); }
+
+function renderCart(){
+  const box = $('#cartItems');
+  if(!box) return;
+  if(cart.length===0){ box.innerHTML = `<div class="empty-state" style="padding:20px 0;"><div class="ic">🛒</div>السلة فارغة</div>`; }
+  else {
+    box.innerHTML = cart.map(i=>`
+      <div class="cart-item">
+        <div style="flex:1">
+          <div class="ci-name">${esc(i.name)}</div>
+          <div class="ci-price">${fmtMoney(i.price)} / وحدة</div>
+        </div>
+        <div class="qty-ctrl">
+          <button onclick="App.changeCartQty('${i.productId}',-1)">−</button>
+          <span>${i.qty}</span>
+          <button onclick="App.changeCartQty('${i.productId}',1)">+</button>
+        </div>
+        <div class="ci-total">${fmtMoney(i.price*i.qty)}</div>
+        <div class="ci-remove" onclick="App.removeCartItem('${i.productId}')">✕</div>
+      </div>`).join('');
+  }
+  renderTotals();
+}
+
+let posDiscountType = 'amount'; // 'amount' = مبلغ ثابت, 'percent' = نسبة مئوية
+
+function computeDiscountAmount(subtotal){
+  const raw = parseFloat($('#posDiscount')?.value)||0;
+  if(raw<=0) return 0;
+  const amount = posDiscountType==='percent' ? subtotal*raw/100 : raw;
+  return Math.min(subtotal, Math.max(0, amount));
+}
+
+function togglePosDiscountType(){
+  posDiscountType = posDiscountType==='amount' ? 'percent' : 'amount';
+  renderTotals();
+}
+
+function cartSubtotal(){ return cart.reduce((a,i)=>a+i.price*i.qty,0); }
+
+// إعادة بناء كاملة (تُستدعى عند تغيّر السلة أو نوع الخصم) — تحافظ على قيمة حقل الخصم المكتوبة
+function renderTotals(){
+  const totalsBox = $('#totalsBox');
+  if(!totalsBox) return;
+  const subtotal = cartSubtotal();
+  const rawVal = $('#posDiscount') ? $('#posDiscount').value : '';
+  const discountVal = computeDiscountAmount(subtotal);
+  const total = Math.max(0, subtotal-discountVal);
+  const unitLabel = posDiscountType==='percent' ? '%' : state.settings.currency;
+  totalsBox.innerHTML = `
+    <div class="tr-line"><span>المجموع الفرعي</span><span id="subtotalVal">${fmtMoney(subtotal)}</span></div>
+    <div class="tr-line"><span>الخصم (مساعدة الزبون)</span>
+      <span style="display:flex;gap:6px;align-items:center;">
+        <input id="posDiscount" inputmode="decimal" value="${esc(rawVal)}" placeholder="0" oninput="App.updateTotalsDisplay()" style="width:70px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;text-align:center;">
+        <button type="button" onclick="App.togglePosDiscountType()" title="بدّل بين مبلغ ثابت ونسبة مئوية" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:${posDiscountType==='percent'?'var(--primary)':'#fff'};color:${posDiscountType==='percent'?'#fff':'inherit'};cursor:pointer;font-size:12px;">${unitLabel}</button>
+      </span>
+    </div>
+    <div class="tr-line" id="discountValueLine" style="color:var(--success);display:${discountVal>0?'flex':'none'}"><span>قيمة الخصم</span><span id="discountValueText">-${fmtMoney(discountVal)}</span></div>
+    <div class="tr-line grand"><span>الإجمالي</span><span id="totalVal">${fmtMoney(total)}</span></div>
+  `;
+  renderPayFields();
+}
+
+// تحديث خفيف يُستدعى أثناء الكتابة في حقل الخصم — لا يعيد بناء الحقل نفسه، فلا يفقد التركيز حرفًا بحرف
+function updateTotalsDisplay(){
+  const subtotal = cartSubtotal();
+  const discountVal = computeDiscountAmount(subtotal);
+  const total = Math.max(0, subtotal-discountVal);
+  const lineEl = $('#discountValueLine');
+  const textEl = $('#discountValueText');
+  if(lineEl && textEl){
+    if(discountVal>0){ lineEl.style.display='flex'; textEl.textContent = '-'+fmtMoney(discountVal); }
+    else { lineEl.style.display='none'; }
+  }
+  const totalEl = $('#totalVal');
+  if(totalEl) totalEl.textContent = fmtMoney(total);
+  renderChange();
+  renderRemaining();
+}
+
+function renderPayFields(){
+  const subtotal = cartSubtotal();
+  const total = Math.max(0, subtotal - computeDiscountAmount(subtotal));
+  const mode = document.querySelector('input[name=payMode]:checked');
+  const modeVal = mode ? mode.value : 'cash';
+  const payFields = $('#payFields');
+  if(!payFields) return;
+  if(modeVal==='cash'){
+    payFields.innerHTML = `
+      <div class="field">
+        <label>المبلغ المستلم من الزبون</label>
+        <input id="posReceived" type="number" min="0" step="0.01" placeholder="${fmtNum(total)}" oninput="renderChange()">
+      </div>
+      <div class="tr-line grand" id="changeLine" style="color:var(--success)"><span>الباقي للزبون</span><span>0.00 ${state.settings.currency}</span></div>
+    `;
+    setTimeout(renderChange,0);
+  } else {
+    payFields.innerHTML = `
+      <div class="field">
+        <label>دفعة أولى الآن (اختياري)</label>
+        <input id="posDownPayment" type="number" min="0" step="0.01" placeholder="0" oninput="renderRemaining()">
+      </div>
+      <div class="tr-line grand" id="remainLine" style="color:var(--danger)"><span>المتبقي كدين</span><span>${fmtMoney(total)}</span></div>
+      ${!posSelectedCustomer ? `<div class="mini-note" style="color:var(--danger)">⚠️ يرجى اختيار الزبون أعلاه لتسجيل الدين</div>` : ''}
+    `;
+  }
+}
+function renderChange(){
+  const subtotal = cartSubtotal();
+  const total = Math.max(0, subtotal - computeDiscountAmount(subtotal));
+  const received = parseFloat($('#posReceived')?.value);
+  const r = isNaN(received) ? total : received;
+  const change = Math.max(0, r-total);
+  const line = $('#changeLine');
+  if(line) line.querySelector('span:last-child').textContent = fmtMoney(change);
+}
+function renderRemaining(){
+  const subtotal = cartSubtotal();
+  const total = Math.max(0, subtotal - computeDiscountAmount(subtotal));
+  const down = parseFloat($('#posDownPayment')?.value)||0;
+  const remain = Math.max(0, total-down);
+  const line = $('#remainLine');
+  if(line) line.querySelector('span:last-child').textContent = fmtMoney(remain);
+}
+
+function completeSale(){
+  if(cart.length===0){ toast('السلة فارغة','warning'); return; }
+  const subtotal = cartSubtotal();
+  const discount = computeDiscountAmount(subtotal);
+  const total = Math.max(0, subtotal-discount);
+  const mode = document.querySelector('input[name=payMode]:checked').value;
+
+  for(const item of cart){
+    const p = state.products.find(x=>x.id===item.productId);
+    if(!p || p.quantity<item.qty){ toast('الكمية غير كافية للمنتج: '+item.name,'danger'); return; }
+  }
+
+  let received=0, downPayment=0, customerId=posSelectedCustomer||null, remainingDebt=0;
+  if(mode==='cash'){
+    const rInput = parseFloat($('#posReceived')?.value);
+    received = isNaN(rInput) ? total : rInput;
+    if(received < total){ toast('المبلغ المستلم أقل من الإجمالي','danger'); return; }
+  } else {
+    if(!customerId){ toast('يرجى اختيار الزبون لتسجيل الدين','danger'); return; }
+    downPayment = Math.max(0, parseFloat($('#posDownPayment')?.value)||0);
+    if(downPayment>total) downPayment = total;
+    remainingDebt = total - downPayment;
+    received = downPayment;
+  }
+
+  cart.forEach(item=>{ const p = state.products.find(x=>x.id===item.productId); p.quantity -= item.qty; });
+
+  const sale = {
+    id:uid('sale'), date:new Date().toISOString(),
+    items: cart.map(i=>({productId:i.productId, name:i.name, qty:i.qty, price:i.price, cost:i.cost})),
+    subtotal, discount, total, mode, received, customerId, downPayment, remainingDebt
+  };
+  state.sales.push(sale);
+
+  if(mode==='debt' && remainingDebt>0){
+    const cust = state.customers.find(c=>c.id===customerId);
+    if(cust){
+      cust.debt = (cust.debt||0) + remainingDebt;
+      state.debtLedger.push({id:uid('ldg'), customerId, type:'sale', amount:remainingDebt, date:sale.date, note:'فاتورة بيع #'+sale.id.slice(-5), saleId:sale.id});
+    }
+  }
+  saveState();
+  toast('تمت عملية البيع بنجاح ✅','success');
+  showReceipt(sale);
+  cart = []; posSelectedCustomer=''; posDiscountType='amount';
+  renderPOSGrid(); renderCart();
+}
+
+function showReceipt(sale){
+  const cust = sale.customerId ? state.customers.find(c=>c.id===sale.customerId) : null;
+  const html = `
+    <div class="receipt-view">
+      <h2>${esc(state.settings.shopName)}</h2>
+      <div class="sub">وصل بيع — ${fmtDateTime(sale.date)}</div>
+      <div class="sub">رقم الفاتورة: #${sale.id.slice(-6)}</div>
+      ${cust ? `<div class="sub">الزبون: ${esc(cust.name)}</div>` : ''}
+      <div class="rline"></div>
+      <table>
+        <thead><tr><th style="text-align:right">الصنف</th><th>ك</th><th>سعر</th><th>مجموع</th></tr></thead>
+        <tbody>
+          ${sale.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${fmtNum(i.qty)}</td><td>${fmtNum(i.price)}</td><td>${fmtNum(i.price*i.qty)}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="rline"></div>
+      <div class="rtot"><span>المجموع الفرعي</span><span>${fmtMoney(sale.subtotal)}</span></div>
+      ${sale.discount>0?`<div class="rtot"><span>الخصم</span><span>${fmtMoney(sale.discount)}</span></div>`:''}
+      <div class="rtot big"><span>الإجمالي</span><span>${fmtMoney(sale.total)}</span></div>
+      ${sale.mode==='cash' ? `
+        <div class="rtot"><span>المبلغ المستلم</span><span>${fmtMoney(sale.received)}</span></div>
+        <div class="rtot"><span>الباقي</span><span>${fmtMoney(Math.max(0,sale.received-sale.total))}</span></div>
+      ` : `
+        <div class="rtot"><span>المدفوع الآن</span><span>${fmtMoney(sale.downPayment)}</span></div>
+        <div class="rtot big" style="color:#b3261e"><span>متبقي كدين</span><span>${fmtMoney(sale.remainingDebt)}</span></div>
+      `}
+      <div class="rfoot">شكرًا لتعاملكم معنا 🌿</div>
+    </div>`;
+  $('#receiptArea').innerHTML = html;
+  openModal('تم إتمام البيع', html + `<div class="mini-note" style="margin-top:10px">اضغط "طباعة" لإخراج الوصل على الطابعة.</div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إغلاق</button>
+     <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة الوصل</button>`);
+}
+
+/* =========================================================
+   المنتجات والمخزون  |  PRODUCTS
+   ========================================================= */
+let productFilter = '';
+function viewProducts(){
+  return `
+  <div class="panel">
+    <div class="panel-head">
+      <h3>قائمة المنتجات (${state.products.length})</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gold" onclick="App.openBulkSupplyModal()">📥 فاتورة توريد (دفعة منتجات)</button>
+        <button class="btn btn-primary" onclick="App.openProductModal()">+ إضافة منتج</button>
+      </div>
+    </div>
+    <div class="search-box" style="margin-bottom:14px;max-width:340px;">
+      <span class="sic">🔎</span>
+      <input placeholder="ابحث بالاسم أو الباركود..." oninput="productFilter=this.value;renderProductsTable()">
+    </div>
+    <div class="tbl-wrap"><table id="productsTable"></table></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>آخر فواتير التوريد</h3><span class="hint">آخر 5 عمليات توريد بضاعة</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>المورد</th><th>عدد الأصناف</th><th>القيمة الإجمالية</th><th></th></tr></thead>
+      <tbody>
+      ${(()=>{
+        const invs = [...state.purchaseInvoices].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+        if(invs.length===0) return `<tr><td colspan="5" class="empty-row">لا توجد فواتير توريد مسجلة بعد</td></tr>`;
+        return invs.map(inv=>{
+          const sup = inv.supplierId ? state.suppliers.find(s=>s.id===inv.supplierId) : null;
+          return `<tr><td>${fmtDateTime(inv.date)}</td><td>${sup?esc(sup.name):'—'}</td><td>${inv.items.length}</td><td>${fmtMoney(inv.total)}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="App.deletePurchaseInvoice('${inv.id}')">🗑️ حذف</button></td></tr>`;
+        }).join('');
+      })()}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+function renderProductsTable(){
+  const q = productFilter.trim().toLowerCase();
+  const list = state.products.filter(p=>!q || p.name.toLowerCase().includes(q) || (p.barcode||'').toLowerCase().includes(q));
+  const table = $('#productsTable');
+  if(!table) return;
+  table.innerHTML = `
+    <thead><tr><th>الاسم</th><th>الباركود</th><th>الفئة</th><th>الشراء</th><th>البيع</th><th>الكمية</th><th>الصلاحية</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+    ${list.length===0 ? `<tr><td colspan="9" class="empty-row">لا توجد منتجات — ابدأ بإضافة منتج جديد</td></tr>` :
+      list.map(p=>{
+        const d = p.expiryDate ? daysUntil(p.expiryDate) : null;
+        let status = `<span class="badge success">جيد</span>`;
+        if(p.quantity<=0) status = `<span class="badge danger">نفذ</span>`;
+        else if(p.quantity<=p.minStock) status = `<span class="badge warning">منخفض</span>`;
+        if(d!==null && d<0) status += ` <span class="badge danger">منتهي</span>`;
+        else if(d!==null && d<=state.settings.expiryDays) status += ` <span class="badge warning">قارب الانتهاء</span>`;
+        return `<tr>
+          <td>${esc(p.name)}</td><td>${esc(p.barcode||'—')}</td><td>${esc(p.category||'—')}</td>
+          <td>${fmtMoney(p.purchasePrice)}</td><td>${fmtMoney(p.sellPrice)}</td>
+          <td>${fmtNum(p.quantity)} ${esc(p.unit||'')}</td><td>${fmtDate(p.expiryDate)}</td>
+          <td>${status}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-outline btn-icon" onclick="App.openProductModal('${p.id}')">✏️</button>
+            <button class="btn btn-danger btn-icon" onclick="App.deleteProduct('${p.id}')">🗑️</button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>`;
+}
+
+function openProductModal(id){
+  const p = id ? state.products.find(x=>x.id===id) : null;
+  const body = `
+    <form id="productForm">
+      <div class="field"><label>اسم المنتج *</label><input name="name" required value="${p?esc(p.name):''}"></div>
+      <div class="field row2">
+        <div><label>الباركود</label><input name="barcode" value="${p?esc(p.barcode||''):''}" placeholder="اختياري"></div>
+        <div><label>الفئة</label><input name="category" value="${p?esc(p.category||''):''}" placeholder="مثال: مشروبات" list="catList">
+          <datalist id="catList">${getCategories().filter(c=>c!=='الكل').map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+        </div>
+      </div>
+      <div class="field row2">
+        <div><label>سعر الشراء *</label><input name="purchasePrice" type="number" step="0.01" min="0" required value="${p?p.purchasePrice:''}"></div>
+        <div><label>سعر البيع *</label><input name="sellPrice" type="number" step="0.01" min="0" required value="${p?p.sellPrice:''}"></div>
+      </div>
+      <div class="field row2">
+        <div><label>الكمية المتوفرة *</label><input name="quantity" type="number" step="0.01" min="0" required value="${p?p.quantity:''}"></div>
+        <div><label>الوحدة</label>
+          <select name="unit">
+            ${['قطعة','كيلوغرام','غرام','لتر','علبة','كرتون','أخرى'].map(u=>`<option ${p&&p.unit===u?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field row2">
+        <div><label>الحد الأدنى للتنبيه</label><input name="minStock" type="number" step="1" min="0" value="${p?p.minStock:5}"></div>
+        <div><label>تاريخ انتهاء الصلاحية</label><input name="expiryDate" type="date" value="${p?p.expiryDate||'':''}"></div>
+      </div>
+    </form>`;
+  openModal(p?'تعديل منتج':'إضافة منتج جديد', body,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-primary" onclick="App.saveProduct(${p?`'${p.id}'`:'null'})">حفظ</button>`);
+}
+function saveProduct(id){
+  const form = $('#productForm');
+  const fd = new FormData(form);
+  const name = (fd.get('name')||'').toString().trim();
+  if(!name){ toast('يرجى إدخال اسم المنتج','danger'); return; }
+  const purchasePrice = parseFloat(fd.get('purchasePrice'))||0;
+  const sellPrice = parseFloat(fd.get('sellPrice'))||0;
+  const quantity = parseFloat(fd.get('quantity'))||0;
+  const barcode = (fd.get('barcode')||'').toString().trim();
+  if(barcode && state.products.some(p=>p.barcode===barcode && p.id!==id)){
+    toast('هذا الباركود مستخدم من قبل منتج آخر','danger'); return;
+  }
+  const data = {
+    name, barcode, category:(fd.get('category')||'').toString().trim(),
+    purchasePrice, sellPrice, quantity,
+    unit:fd.get('unit'), minStock:parseFloat(fd.get('minStock'))||0,
+    expiryDate: fd.get('expiryDate')||''
+  };
+  if(id){
+    Object.assign(state.products.find(p=>p.id===id), data);
+    toast('تم تحديث المنتج','success');
+  } else {
+    state.products.push(Object.assign({id:uid('prod')}, data));
+    toast('تمت إضافة المنتج','success');
+  }
+  saveState(); closeModal(); renderProductsTable();
+}
+function deleteProduct(id){
+  const p = state.products.find(x=>x.id===id);
+  if(!p) return;
+  openModal('تأكيد الحذف', `<p>هل تريد حذف المنتج <b>${esc(p.name)}</b>؟ لا يمكن التراجع عن هذا الإجراء.</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="App.confirmDeleteProduct('${id}')">حذف نهائي</button>`);
+}
+function confirmDeleteProduct(id){
+  state.products = state.products.filter(p=>p.id!==id);
+  saveState(); closeModal(); renderProductsTable();
+  toast('تم حذف المنتج','success');
+}
+
+/* =========================================================
+   فاتورة توريد (دفعة منتجات) + مسح تلقائي بالصورة (OCR)
+   BULK SUPPLY INVOICE + IMAGE OCR SCAN
+   ========================================================= */
+let bulkRowSeq = 0;
+let tesseractLoading = null;
+
+function openBulkSupplyModal(){
+  bulkRowSeq = 0;
+  const body = `
+    <div class="mini-note" style="margin-bottom:10px;">
+      أضف كل المنتجات الموجودة في وصل التوريد دفعة واحدة، ثم اضغط "حفظ الفاتورة" ليتم تحديث المخزون تلقائيًا.
+      إذا كان اسم المنتج مطابقًا لمنتج موجود مسبقًا سيتم زيادة كميته فقط، وإلا سيُضاف كمنتج جديد.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="App.addBulkRow()">+ إضافة سطر يدويًا</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ocrFileInput').click()">📷 مسح الفاتورة بالصورة (تجريبي)</button>
+      <input id="ocrFileInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="App.handleOcrFile(this)">
+      <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('productImportFile').click()">📄 استيراد من ملف (CSV/JSON)</button>
+      <input id="productImportFile" type="file" accept=".csv,.json" style="display:none" onchange="App.handleProductFileImport(this)">
+      <span style="display:inline-flex;align-items:center;gap:6px;">
+        <input id="bulkMargin" type="number" min="0" step="0.1" value="${state.settings.defaultMargin||30}" style="width:60px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;">
+        <span class="mini-note">% هامش ربح</span>
+        <button type="button" class="btn btn-gold btn-sm" onclick="App.applyBulkMargin()">💰 تطبيق على الأسعار الفارغة</button>
+      </span>
+      <span class="mini-note" id="ocrStatus"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="min-width:160px">اسم المنتج</th><th>الباركود</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>الصلاحية</th><th></th></tr></thead>
+        <tbody id="bulkRowsBody"></tbody>
+      </table>
+    </div>
+    <datalist id="bulkProdList">${state.products.map(p=>`<option value="${esc(p.name)}">`).join('')}</datalist>
+    <div class="field row2" style="margin-top:14px;">
+      <div><label>المورد (اختياري)</label>
+        <select id="bulkSupplier"><option value="">— بدون مورد —</option>${state.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+      </div>
+      <div><label>ملاحظة</label><input id="bulkNote" placeholder="اختياري"></div>
+    </div>
+    <div class="tr-line grand" style="margin-top:10px;"><span>القيمة الإجمالية للفاتورة</span><span id="bulkTotal">0.00 ${state.settings.currency}</span></div>
+  `;
+  openModal('فاتورة توريد — إضافة دفعة منتجات', body,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-primary" onclick="App.saveBulkSupply()">💾 حفظ الفاتورة وتحديث المخزون</button>`,
+    {wide:true});
+  addBulkRow(); addBulkRow(); addBulkRow();
+}
+
+function addBulkRow(prefill){
+  prefill = prefill || {};
+  const rid = 'brow_'+(++bulkRowSeq);
+  const rowHtml = `
+    <tr id="${rid}">
+      <td><input list="bulkProdList" data-f="name" value="${esc(prefill.name||'')}" style="min-width:150px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;width:100%;" placeholder="اسم المنتج"></td>
+      <td><input data-f="barcode" value="${esc(prefill.barcode||'')}" style="width:110px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;" placeholder="اختياري"></td>
+      <td><input data-f="qty" type="number" min="0" step="0.01" value="${prefill.qty||''}" oninput="App.updateBulkTotal()" style="width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;"></td>
+      <td><input data-f="purchasePrice" type="number" min="0" step="0.01" value="${prefill.purchasePrice||''}" oninput="App.updateBulkTotal()" style="width:85px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;"></td>
+      <td><input data-f="sellPrice" type="number" min="0" step="0.01" value="${prefill.sellPrice||''}" style="width:85px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;" placeholder="إن كان جديدًا"></td>
+      <td><input data-f="expiryDate" type="date" value="${prefill.expiryDate||''}" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;"></td>
+      <td><button type="button" class="ci-remove" onclick="App.removeBulkRow('${rid}')">✕</button></td>
+    </tr>`;
+  $('#bulkRowsBody').insertAdjacentHTML('beforeend', rowHtml);
+  updateBulkTotal();
+}
+function removeBulkRow(rid){
+  const el = document.getElementById(rid);
+  if(el) el.remove();
+  updateBulkTotal();
+}
+function readBulkRows(){
+  const rows = Array.from(document.querySelectorAll('#bulkRowsBody tr'));
+  return rows.map(tr=>{
+    const get = f => tr.querySelector(`[data-f="${f}"]`).value.trim();
+    return {
+      name: get('name'),
+      barcode: get('barcode'),
+      qty: parseFloat(get('qty'))||0,
+      purchasePrice: parseFloat(get('purchasePrice'))||0,
+      sellPrice: parseFloat(get('sellPrice'))||0,
+      expiryDate: get('expiryDate')
+    };
+  }).filter(r=>r.name && r.qty>0);
+}
+function updateBulkTotal(){
+  const rows = readBulkRows();
+  const total = rows.reduce((a,r)=>a+r.qty*r.purchasePrice,0);
+  const el = $('#bulkTotal');
+  if(el) el.textContent = fmtMoney(total);
+}
+function applyBulkMargin(){
+  const margin = parseFloat($('#bulkMargin').value);
+  if(isNaN(margin) || margin<0){ toast('يرجى إدخال نسبة هامش صحيحة','danger'); return; }
+  const trs = document.querySelectorAll('#bulkRowsBody tr');
+  let count = 0;
+  trs.forEach(tr=>{
+    const purchaseInput = tr.querySelector('[data-f="purchasePrice"]');
+    const sellInput = tr.querySelector('[data-f="sellPrice"]');
+    const purchase = parseFloat(purchaseInput.value);
+    if(purchase>0 && !sellInput.value.trim()){
+      sellInput.value = (Math.round(purchase*(1+margin/100)*100)/100).toFixed(2);
+      count++;
+    }
+  });
+  updateBulkTotal();
+  toast('تم تطبيق هامش '+margin+'% على '+count+' صنفًا','success');
+}
+function saveBulkSupply(){
+  const rows = readBulkRows();
+  if(rows.length===0){ toast('أضف منتجًا واحدًا على الأقل بكمية وسعر شراء صحيحين','danger'); return; }
+  const invalidNew = rows.find(r=>{
+    const exists = state.products.find(p=> (r.barcode && p.barcode===r.barcode) || p.name.trim().toLowerCase()===r.name.toLowerCase());
+    return !exists && r.sellPrice<=0;
+  });
+  if(invalidNew){ toast('يرجى إدخال سعر البيع للمنتج الجديد: '+invalidNew.name,'danger'); return; }
+
+  const supplierId = $('#bulkSupplier').value || null;
+  const note = $('#bulkNote').value.trim();
+  const invoiceItems = [];
+  let total = 0;
+
+  rows.forEach(r=>{
+    let p = state.products.find(x=> (r.barcode && x.barcode===r.barcode) || x.name.trim().toLowerCase()===r.name.toLowerCase());
+    if(p){
+      p.quantity += r.qty;
+      if(r.purchasePrice>0) p.purchasePrice = r.purchasePrice;
+      if(r.sellPrice>0) p.sellPrice = r.sellPrice;
+      if(r.expiryDate) p.expiryDate = r.expiryDate;
+      if(r.barcode && !p.barcode) p.barcode = r.barcode;
+    } else {
+      p = {
+        id:uid('prod'), name:r.name, barcode:r.barcode, category:'',
+        purchasePrice:r.purchasePrice, sellPrice:r.sellPrice, quantity:r.qty,
+        unit:'قطعة', minStock:state.settings.lowStock||5, expiryDate:r.expiryDate||''
+      };
+      state.products.push(p);
+    }
+    invoiceItems.push({productId:p.id, name:p.name, qty:r.qty, cost:r.purchasePrice});
+    total += r.qty*r.purchasePrice;
+  });
+
+  state.purchaseInvoices.push({id:uid('pinv'), date:new Date().toISOString(), supplierId, note, items:invoiceItems, total});
+  saveState(); closeModal(); renderView();
+  toast('تم تحديث المخزون من فاتورة التوريد ✅ ('+rows.length+' صنف)','success');
+}
+
+/* =========================================================
+   حذف فاتورة توريد  |  DELETE PURCHASE INVOICE
+   ========================================================= */
+function deletePurchaseInvoice(id){
+  const inv = state.purchaseInvoices.find(x=>x.id===id);
+  if(!inv) return;
+  openModal('تأكيد حذف فاتورة التوريد',
+    `<p>هل تريد حذف فاتورة التوريد بتاريخ <b>${fmtDateTime(inv.date)}</b> نهائيًا؟</p>
+     <p class="mini-note" style="color:var(--danger)">⚠️ سيتم خصم الكميات التي أضافتها هذه الفاتورة من المخزون تلقائيًا. إذا كان جزء من هذه الكمية قد بيع بالفعل، ستُخصم الكمية المتوفرة فقط (لن تصبح سالبة). لا يمكن التراجع عن هذا الإجراء.</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="App.confirmDeletePurchaseInvoice('${id}')">حذف نهائي</button>`);
+}
+function confirmDeletePurchaseInvoice(id){
+  const inv = state.purchaseInvoices.find(x=>x.id===id);
+  if(!inv) return;
+
+  (inv.items||[]).forEach(it=>{
+    const p = state.products.find(x=>x.id===it.productId);
+    if(p) p.quantity = Math.max(0, (p.quantity||0) - it.qty);
+  });
+
+  state.purchaseInvoices = state.purchaseInvoices.filter(x=>x.id!==id);
+
+  saveState();
+  toast('تم حذف فاتورة التوريد وتصحيح المخزون','success');
+  closeModal();
+  renderView();
+}
+
+/* ---- استيراد قائمة منتجات من ملف CSV أو JSON (مثلاً مُستخرجة من فاتورة PDF) ---- */
+function handleProductFileImport(input){
+  const file = input.files[0];
+  if(!file) return;
+  const isJson = file.name.toLowerCase().endsWith('.json');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      let rows = [];
+      if(isJson){
+        const data = JSON.parse(e.target.result);
+        rows = Array.isArray(data) ? data : (data.products || []);
+      } else {
+        rows = parseCsvProducts(e.target.result);
+      }
+      rows = rows.map(r=>({
+        name:(r.name||r.الاسم||'').toString().trim(),
+        barcode:(r.barcode||r.الباركود||'').toString().trim(),
+        qty:parseFloat(r.qty||r.quantity||r.الكمية)||0,
+        purchasePrice:parseFloat(r.purchasePrice||r.سعر_الشراء)||0,
+        sellPrice:parseFloat(r.sellPrice||r.سعر_البيع)||0,
+        expiryDate:(r.expiryDate||r.الصلاحية||'').toString().trim()
+      })).filter(r=>r.name);
+      if(rows.length===0){ toast('لم يتم العثور على منتجات صالحة في الملف','danger'); return; }
+      rows.forEach(r=>addBulkRow(r));
+      toast('تم استيراد '+rows.length+' منتج من الملف — راجع البيانات ثم احفظ الفاتورة','success');
+    }catch(err){
+      toast('تعذرت قراءة الملف، تأكد من صيغته','danger');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+function parseCsvProducts(text){
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2) return [];
+  const headers = lines[0].split(',').map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const cells = line.split(',').map(c=>c.trim());
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h] = cells[i]||''; });
+    return obj;
+  });
+}
+
+/* ---- مسح الفاتورة بالصورة (OCR) ---- */
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  if(tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('تعذر تحميل مكتبة القراءة — تحتاج هذه الميزة اتصالاً بالإنترنت في أول استخدام'));
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+
+async function handleOcrFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const statusEl = $('#ocrStatus');
+  statusEl.textContent = 'جاري تحميل أداة القراءة...';
+  try{
+    await loadTesseract();
+    statusEl.textContent = 'جاري تحليل الصورة... قد يستغرق ذلك بضع ثوانٍ';
+    const worker = await Tesseract.createWorker('ara+eng');
+    const { data } = await worker.recognize(file);
+    await worker.terminate();
+    const parsedRows = parseInvoiceText(data.text);
+    if(parsedRows.length===0){
+      statusEl.textContent = '';
+      toast('لم يتمكن النظام من استخراج أي سطر واضح من الصورة، أضف المنتجات يدويًا','warning');
+    } else {
+      parsedRows.forEach(r=>addBulkRow(r));
+      statusEl.textContent = '';
+      toast('تم استخراج '+parsedRows.length+' سطر من الصورة — يرجى التحقق من الأسماء والأسعار قبل الحفظ ⚠️','warning');
+    }
+  }catch(err){
+    statusEl.textContent = '';
+    toast(err.message || 'تعذرت قراءة الصورة، أضف المنتجات يدويًا','danger');
+  }
+  input.value = '';
+}
+
+function parseInvoiceText(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>1);
+  const rows = [];
+  lines.forEach(line=>{
+    const numMatches = line.match(/\d+([.,]\d+)?/g);
+    if(!numMatches || numMatches.length===0) return;
+    const nums = numMatches.map(n=>parseFloat(n.replace(',','.')));
+    let name = line;
+    numMatches.forEach(n=>{ name = name.replace(n,''); });
+    name = name.replace(/[|_\-–—:.]+/g,' ').replace(/\s+/g,' ').trim();
+    if(!name || name.length<2) return;
+    let qty = 1, price = nums[nums.length-1];
+    if(nums.length>=2){ qty = nums[0]; price = nums[nums.length-1]; }
+    if(!price || price<=0) return;
+    rows.push({name, qty, purchasePrice:price, sellPrice:'', barcode:'', expiryDate:''});
+  });
+  return rows;
+}
+
+/* =========================================================
+   سجل المبيعات  |  SALES HISTORY
+   ========================================================= */
+function viewSales(){
+  const sorted = [...state.sales].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  return `
+  <div class="panel">
+    <div class="panel-head"><h3>سجل المبيعات (${sorted.length})</h3></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>الرقم</th><th>التاريخ</th><th>عدد الأصناف</th><th>الإجمالي</th><th>طريقة الدفع</th><th>الزبون</th><th></th></tr></thead>
+      <tbody>
+      ${sorted.length===0?`<tr><td colspan="7" class="empty-row">لا توجد مبيعات مسجلة بعد</td></tr>`:
+        sorted.map(s=>{
+          const cust = s.customerId ? state.customers.find(c=>c.id===s.customerId) : null;
+          return `<tr>
+            <td>#${s.id.slice(-6)}${s.edited?' <span class="badge warning" title="تم تعديلها">معدّلة</span>':''}</td><td>${fmtDateTime(s.date)}</td><td>${s.items.length}</td>
+            <td>${fmtMoney(s.total)}</td>
+            <td>${s.mode==='cash'?'<span class="badge success">نقدًا</span>':'<span class="badge warning">دين</span>'}</td>
+            <td>${cust?esc(cust.name):'—'}</td>
+            <td style="display:flex;gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="App.reprintSale('${s.id}')">🖨️ الوصل</button>
+              <button class="btn btn-gold btn-sm" onclick="App.openEditSaleModal('${s.id}')">✏️ تعديل</button>
+              <button class="btn btn-danger btn-sm" onclick="App.deleteSale('${s.id}')">🗑️ حذف</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+}
+function reprintSale(id){
+  const sale = state.sales.find(s=>s.id===id);
+  if(sale) showReceipt(sale);
+}
+
+/* =========================================================
+   تعديل عملية بيع مكتملة  |  EDIT COMPLETED SALE
+   ========================================================= */
+let editSaleRowSeq = 0;
+let editingSaleId = null;
+
+function openEditSaleModal(id){
+  const sale = state.sales.find(s=>s.id===id);
+  if(!sale) return;
+  editingSaleId = id;
+  editSaleRowSeq = 0;
+  const body = `
+    <div class="mini-note" style="margin-bottom:10px;color:var(--danger)">
+      ⚠️ سيتم تصحيح المخزون والديون المرتبطة بهذه الفاتورة تلقائيًا حسب التعديل.
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="min-width:160px">المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>المجموع</th><th></th></tr></thead>
+        <tbody id="editSaleRowsBody"></tbody>
+      </table>
+    </div>
+    <datalist id="editSaleProdList">${state.products.map(p=>`<option value="${esc(p.name)}">`).join('')}</datalist>
+    <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="App.addEditSaleRow()">+ إضافة صنف</button>
+
+    <div class="field" style="margin-top:14px;">
+      <label>الخصم</label>
+      <input id="editSaleDiscount" type="number" min="0" step="0.01" value="${sale.discount||0}" oninput="App.updateEditSaleTotal()">
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>طريقة الدفع</label>
+      <div style="display:flex;gap:14px;">
+        <label><input type="radio" name="editPayMode" value="cash" ${sale.mode==='cash'?'checked':''} onchange="App.renderEditSalePayFields()"> نقدًا</label>
+        <label><input type="radio" name="editPayMode" value="debt" ${sale.mode==='debt'?'checked':''} onchange="App.renderEditSalePayFields()"> دين</label>
+      </div>
+    </div>
+    <div id="editSalePayFields"></div>
+
+    <div class="tr-line grand" style="margin-top:12px;"><span>الإجمالي الجديد</span><span id="editSaleTotal">${fmtMoney(sale.total)}</span></div>
+  `;
+  openModal('تعديل عملية البيع #'+sale.id.slice(-6), body,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="App.saveEditedSale()">💾 حفظ التعديلات</button>`,
+    {wide:true});
+
+  sale.items.forEach(it=>addEditSaleRow(it));
+  renderEditSalePayFields();
+}
+
+function addEditSaleRow(prefill){
+  prefill = prefill || {};
+  const rid = 'erow_'+(++editSaleRowSeq);
+  const rowHtml = `
+    <tr id="${rid}">
+      <td><input list="editSaleProdList" data-f="name" value="${esc(prefill.name||'')}" style="min-width:150px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;width:100%;" placeholder="اسم المنتج" oninput="App.onEditSaleNameInput('${rid}')"></td>
+      <td><input data-f="qty" type="number" min="0.01" step="0.01" value="${prefill.qty||1}" oninput="App.updateEditSaleTotal()" style="width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;"></td>
+      <td><input data-f="price" type="number" min="0" step="0.01" value="${prefill.price!=null?prefill.price:''}" oninput="App.updateEditSaleTotal()" style="width:90px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;"></td>
+      <td data-f="lineTotal" style="font-weight:700;">0.00</td>
+      <td><button type="button" class="ci-remove" onclick="App.removeEditSaleRow('${rid}')">✕</button></td>
+    </tr>`;
+  $('#editSaleRowsBody').insertAdjacentHTML('beforeend', rowHtml);
+  updateEditSaleTotal();
+}
+
+function onEditSaleNameInput(rid){
+  const tr = document.getElementById(rid);
+  const name = tr.querySelector('[data-f="name"]').value.trim();
+  const p = state.products.find(x=>x.name===name);
+  if(p){
+    const priceInput = tr.querySelector('[data-f="price"]');
+    if(!priceInput.value) priceInput.value = p.sellPrice;
+  }
+  updateEditSaleTotal();
+}
+
+function removeEditSaleRow(rid){
+  const el = document.getElementById(rid);
+  if(el) el.remove();
+  updateEditSaleTotal();
+}
+
+function readEditSaleRows(){
+  const rows = Array.from(document.querySelectorAll('#editSaleRowsBody tr'));
+  return rows.map(tr=>{
+    const name = tr.querySelector('[data-f="name"]').value.trim();
+    const qty = parseFloat(tr.querySelector('[data-f="qty"]').value)||0;
+    const price = parseFloat(tr.querySelector('[data-f="price"]').value)||0;
+    const p = state.products.find(x=>x.name===name);
+    return { productId: p?p.id:null, name, qty, price, cost: p?p.purchasePrice:0 };
+  }).filter(r=>r.productId && r.qty>0);
+}
+
+function currentEditSaleTotal(){
+  const trs = document.querySelectorAll('#editSaleRowsBody tr');
+  let subtotal=0;
+  trs.forEach(tr=>{
+    const qty = parseFloat(tr.querySelector('[data-f="qty"]').value)||0;
+    const price = parseFloat(tr.querySelector('[data-f="price"]').value)||0;
+    subtotal += qty*price;
+  });
+  const discount = Math.max(0, parseFloat($('#editSaleDiscount')?.value)||0);
+  return Math.max(0, subtotal-discount);
+}
+
+function updateEditSaleTotal(){
+  const trs = document.querySelectorAll('#editSaleRowsBody tr');
+  let subtotal=0;
+  trs.forEach(tr=>{
+    const qty = parseFloat(tr.querySelector('[data-f="qty"]').value)||0;
+    const price = parseFloat(tr.querySelector('[data-f="price"]').value)||0;
+    const lt = qty*price; subtotal += lt;
+    const cell = tr.querySelector('[data-f="lineTotal"]');
+    if(cell) cell.textContent = fmtNum(lt);
+  });
+  const discount = Math.max(0, parseFloat($('#editSaleDiscount')?.value)||0);
+  const total = Math.max(0, subtotal-discount);
+  const totalEl = $('#editSaleTotal');
+  if(totalEl) totalEl.textContent = fmtMoney(total);
+  updateEditSaleRemainLine();
+}
+
+function renderEditSalePayFields(){
+  const sale = state.sales.find(s=>s.id===editingSaleId);
+  if(!sale) return;
+  const mode = document.querySelector('input[name=editPayMode]:checked')?.value || 'cash';
+  const box = $('#editSalePayFields');
+  if(!box) return;
+  if(mode==='cash'){
+    box.innerHTML = `
+      <div class="field">
+        <label>المبلغ المستلم من الزبون</label>
+        <input id="editSaleReceived" type="number" min="0" step="0.01" value="${sale.mode==='cash'?(sale.received||''):''}" oninput="App.updateEditSaleRemainLine()">
+      </div>
+      <div class="tr-line" id="editSaleChangeLine" style="color:var(--success)"><span>الباقي للزبون</span><span>0.00 ${state.settings.currency}</span></div>
+    `;
+  } else {
+    box.innerHTML = `
+      <div class="field">
+        <label>الزبون</label>
+        <select id="editSaleCustomer">
+          <option value="">— اختر —</option>
+          ${state.customers.map(c=>`<option value="${c.id}" ${sale.customerId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>الدفعة الأولى (اختياري)</label>
+        <input id="editSaleDownPayment" type="number" min="0" step="0.01" value="${sale.mode==='debt'?(sale.downPayment||0):0}" oninput="App.updateEditSaleRemainLine()">
+      </div>
+      <div class="tr-line" id="editSaleRemainLine" style="color:var(--danger)"><span>المتبقي كدين</span><span>0.00 ${state.settings.currency}</span></div>
+    `;
+  }
+  updateEditSaleRemainLine();
+}
+
+function updateEditSaleRemainLine(){
+  const total = currentEditSaleTotal();
+  const mode = document.querySelector('input[name=editPayMode]:checked')?.value || 'cash';
+  if(mode==='cash'){
+    const received = parseFloat($('#editSaleReceived')?.value);
+    const r = isNaN(received) ? total : received;
+    const line = $('#editSaleChangeLine');
+    if(line) line.querySelector('span:last-child').textContent = fmtMoney(Math.max(0, r-total));
+  } else {
+    const down = parseFloat($('#editSaleDownPayment')?.value)||0;
+    const line = $('#editSaleRemainLine');
+    if(line) line.querySelector('span:last-child').textContent = fmtMoney(Math.max(0, total-down));
+  }
+}
+
+function saveEditedSale(){
+  const sale = state.sales.find(s=>s.id===editingSaleId);
+  if(!sale) return;
+  const rows = readEditSaleRows();
+  if(rows.length===0){ toast('يجب إضافة صنف واحد على الأقل','danger'); return; }
+
+  const discount = Math.max(0, parseFloat($('#editSaleDiscount')?.value)||0);
+  const subtotal = rows.reduce((a,r)=>a+r.qty*r.price,0);
+  const total = Math.max(0, subtotal-discount);
+  const mode = document.querySelector('input[name=editPayMode]:checked').value;
+
+  // التحقق من توفر المخزون (مع افتراض إرجاع الكميات الأصلية لهذه الفاتورة أولًا)
+  const originalQtyByProduct = {};
+  sale.items.forEach(it=>{ originalQtyByProduct[it.productId] = (originalQtyByProduct[it.productId]||0) + it.qty; });
+  const newQtyByProduct = {};
+  rows.forEach(r=>{ newQtyByProduct[r.productId] = (newQtyByProduct[r.productId]||0) + r.qty; });
+
+  for(const pid in newQtyByProduct){
+    const p = state.products.find(x=>x.id===pid);
+    if(!p){ toast('أحد المنتجات لم يعد موجودًا','danger'); return; }
+    const available = p.quantity + (originalQtyByProduct[pid]||0);
+    if(newQtyByProduct[pid] > available){
+      toast('الكمية غير كافية للمنتج: '+p.name,'danger');
+      return;
+    }
+  }
+
+  let customerId=null, received=0, downPayment=0, remainingDebt=0;
+  if(mode==='debt'){
+    customerId = $('#editSaleCustomer')?.value || '';
+    if(!customerId){ toast('يرجى اختيار الزبون لتسجيل الدين','danger'); return; }
+    downPayment = Math.max(0, parseFloat($('#editSaleDownPayment')?.value)||0);
+    if(downPayment>total) downPayment = total;
+    remainingDebt = total - downPayment;
+    received = downPayment;
+  } else {
+    const rInput = parseFloat($('#editSaleReceived')?.value);
+    received = isNaN(rInput) ? total : rInput;
+    if(received < total){ toast('المبلغ المستلم أقل من الإجمالي','danger'); return; }
+  }
+
+  // تصحيح المخزون: الفرق بين الكمية القديمة والجديدة لكل منتج
+  const allProductIds = new Set([...Object.keys(originalQtyByProduct), ...Object.keys(newQtyByProduct)]);
+  allProductIds.forEach(pid=>{
+    const p = state.products.find(x=>x.id===pid);
+    if(!p) return;
+    const delta = (originalQtyByProduct[pid]||0) - (newQtyByProduct[pid]||0);
+    p.quantity += delta;
+  });
+
+  // إلغاء أثر الدين القديم المرتبط بهذه الفاتورة
+  if(sale.mode==='debt' && sale.remainingDebt>0 && sale.customerId){
+    const oldCust = state.customers.find(c=>c.id===sale.customerId);
+    if(oldCust) oldCust.debt = Math.max(0, (oldCust.debt||0) - sale.remainingDebt);
+  }
+  state.debtLedger = state.debtLedger.filter(l=>l.saleId !== sale.id);
+
+  // تطبيق الدين الجديد إن وُجد
+  if(mode==='debt' && remainingDebt>0 && customerId){
+    const cust = state.customers.find(c=>c.id===customerId);
+    if(cust){
+      cust.debt = (cust.debt||0) + remainingDebt;
+      state.debtLedger.push({id:uid('ldg'), customerId, type:'sale', amount:remainingDebt, date:sale.date, note:'فاتورة بيع #'+sale.id.slice(-5)+' (معدّلة)', saleId:sale.id});
+    }
+  }
+
+  sale.items = rows.map(r=>({productId:r.productId, name:r.name, qty:r.qty, price:r.price, cost:r.cost}));
+  sale.subtotal = subtotal;
+  sale.discount = discount;
+  sale.total = total;
+  sale.mode = mode;
+  sale.received = received;
+  sale.customerId = mode==='debt' ? customerId : null;
+  sale.downPayment = mode==='debt' ? downPayment : 0;
+  sale.remainingDebt = mode==='debt' ? remainingDebt : 0;
+  sale.edited = true;
+  sale.editedAt = new Date().toISOString();
+
+  saveState();
+  toast('تم تعديل عملية البيع بنجاح ✅','success');
+  closeModal();
+  renderView();
+}
+
+/* =========================================================
+   حذف عملية بيع (مسح البون) نهائيًا  |  DELETE SALE
+   ========================================================= */
+function deleteSale(id){
+  const sale = state.sales.find(s=>s.id===id);
+  if(!sale) return;
+  openModal('تأكيد حذف عملية البيع',
+    `<p>هل تريد حذف فاتورة البيع <b>#${sale.id.slice(-6)}</b> نهائيًا؟</p>
+     <p class="mini-note" style="color:var(--danger)">⚠️ سيتم إرجاع كل الكميات لهذه الفاتورة إلى المخزون تلقائيًا${sale.mode==='debt' && sale.remainingDebt>0 ? '، وإلغاء الدين المرتبط بها من رصيد الزبون' : ''}. لا يمكن التراجع عن هذا الإجراء.</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="App.confirmDeleteSale('${id}')">حذف نهائي</button>`);
+}
+function confirmDeleteSale(id){
+  const sale = state.sales.find(s=>s.id===id);
+  if(!sale) return;
+
+  // إرجاع الكميات للمخزون
+  (sale.items||[]).forEach(it=>{
+    const p = state.products.find(x=>x.id===it.productId);
+    if(p) p.quantity = (p.quantity||0) + it.qty;
+  });
+
+  // إلغاء أثر الدين المرتبط بهذه الفاتورة إن وُجد
+  if(sale.mode==='debt' && sale.remainingDebt>0 && sale.customerId){
+    const cust = state.customers.find(c=>c.id===sale.customerId);
+    if(cust) cust.debt = Math.max(0, (cust.debt||0) - sale.remainingDebt);
+  }
+  state.debtLedger = state.debtLedger.filter(l=>l.saleId !== sale.id);
+
+  state.sales = state.sales.filter(s=>s.id!==id);
+
+  saveState();
+  toast('تم حذف عملية البيع وإرجاع الكميات للمخزون','success');
+  closeModal();
+  renderView();
+}
+
+/* =========================================================
+   الديون (محمية)  |  DEBTS (PROTECTED)
+   ========================================================= */
+let pinBuffer = '';
+function viewDebts(){
+  if(!debtUnlocked) return viewPinLock();
+  const withDebt = state.customers.filter(c=>(c.debt||0)>0).sort((a,b)=>b.debt-a.debt);
+  return `
+  <div class="panel">
+    <div class="panel-head">
+      <h3>🔓 قسم الديون</h3>
+      <button class="btn btn-outline btn-sm" onclick="App.lockDebts()">🔒 قفل القسم</button>
+    </div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>الزبون</th><th>الهاتف</th><th>الدين الحالي</th><th></th></tr></thead>
+      <tbody>
+      ${withDebt.length===0?`<tr><td colspan="4" class="empty-row">لا توجد ديون مسجلة حاليًا 🎉</td></tr>`:
+        withDebt.map(c=>`<tr>
+          <td>${esc(c.name)}</td><td>${esc(c.phone||'—')}</td>
+          <td style="color:var(--danger);font-weight:800">${fmtMoney(c.debt)}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-success btn-sm" onclick="App.openPaymentModal('${c.id}')">تسجيل دفعة</button>
+            <button class="btn btn-outline btn-sm" onclick="App.openLedgerModal('${c.id}')">السجل</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>إضافة دين يدوي</h3><span class="hint">لتسجيل دين غير ناتج عن فاتورة بيع</span></div>
+    <form id="manualDebtForm" onsubmit="event.preventDefault();App.addManualDebt();">
+      <div class="field row2">
+        <div><label>الزبون</label>
+          <select name="customerId" required>
+            <option value="">اختر الزبون</option>
+            ${state.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div><label>المبلغ</label><input name="amount" type="number" step="0.01" min="0.01" required></div>
+      </div>
+      <div class="field"><label>ملاحظة</label><input name="note" placeholder="اختياري"></div>
+      <button class="btn btn-primary" type="submit">إضافة الدين</button>
+    </form>
+  </div>`;
+}
+function viewPinLock(){
+  return `
+  <div class="pin-lock">
+    <div class="lockic">🔒</div>
+    <h3 style="margin:0 0 4px;color:var(--primary-dark)">قسم محمي</h3>
+    <p class="mini-note">أدخل رمز الدخول (PIN) للوصول إلى قسم الديون</p>
+    <div class="pin-dots" id="pinDots">${'●'.repeat(0)}${[0,1,2,3].map(()=>'<span></span>').join('')}</div>
+    <div class="pin-pad">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="App.pinPress('${n}')">${n}</button>`).join('')}
+      <button onclick="App.pinClear()">مسح</button>
+      <button onclick="App.pinPress('0')">0</button>
+      <button onclick="App.pinBackspace()">⌫</button>
+    </div>
+    <p class="mini-note" style="margin-top:14px;">الرمز الافتراضي: 1234 (يمكن تغييره من الإعدادات)</p>
+  </div>`;
+}
+function refreshPinDots(){
+  const dots = $('#pinDots');
+  if(!dots) return;
+  dots.innerHTML = [0,1,2,3].map(i=>`<span class="${i<pinBuffer.length?'filled':''}"></span>`).join('');
+}
+function pinPress(d){
+  if(pinBuffer.length>=4) return;
+  pinBuffer += d;
+  refreshPinDots();
+  if(pinBuffer.length===4){
+    setTimeout(()=>{
+      if(pinBuffer===state.settings.debtPin){
+        debtUnlocked = true; pinBuffer=''; renderSidebar(); renderView();
+        toast('تم فتح قسم الديون','success');
+      } else {
+        toast('رمز غير صحيح','danger'); pinBuffer=''; refreshPinDots();
+      }
+    },150);
+  }
+}
+function pinClear(){ pinBuffer=''; refreshPinDots(); }
+function pinBackspace(){ pinBuffer = pinBuffer.slice(0,-1); refreshPinDots(); }
+function lockDebts(){ debtUnlocked=false; renderSidebar(); renderView(); }
+
+function openPaymentModal(customerId){
+  const c = state.customers.find(x=>x.id===customerId);
+  openModal('تسجيل دفعة — '+c.name,
+    `<div class="field"><label>الدين الحالي</label><input value="${fmtMoney(c.debt)}" disabled></div>
+     <div class="field"><label>مبلغ الدفعة</label><input id="paymentAmount" type="number" min="0.01" step="0.01" max="${c.debt}"></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-success" onclick="App.submitPayment('${customerId}')">تسجيل الدفعة</button>`);
+}
+function submitPayment(customerId){
+  const amount = parseFloat($('#paymentAmount').value);
+  if(!amount || amount<=0){ toast('يرجى إدخال مبلغ صحيح','danger'); return; }
+  const c = state.customers.find(x=>x.id===customerId);
+  const applied = Math.min(amount, c.debt);
+  c.debt -= applied;
+  state.debtLedger.push({id:uid('ldg'), customerId, type:'payment', amount:applied, date:new Date().toISOString(), note:'دفعة من الزبون'});
+  saveState(); closeModal(); renderView();
+  toast('تم تسجيل الدفعة بنجاح','success');
+}
+function addManualDebt(){
+  const form = $('#manualDebtForm');
+  const fd = new FormData(form);
+  const customerId = fd.get('customerId');
+  const amount = parseFloat(fd.get('amount'))||0;
+  if(!customerId || amount<=0){ toast('يرجى اختيار الزبون وإدخال مبلغ صحيح','danger'); return; }
+  const c = state.customers.find(x=>x.id===customerId);
+  c.debt = (c.debt||0)+amount;
+  state.debtLedger.push({id:uid('ldg'), customerId, type:'manual', amount, date:new Date().toISOString(), note:fd.get('note')||'دين يدوي'});
+  saveState(); renderView();
+  toast('تمت إضافة الدين','success');
+}
+function openLedgerModal(customerId){
+  const c = state.customers.find(x=>x.id===customerId);
+  const entries = state.debtLedger.filter(l=>l.customerId===customerId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const body = `
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+      ${entries.length===0?`<tr><td colspan="4" class="empty-row">لا يوجد سجل</td></tr>`:
+        entries.map(l=>`<tr>
+          <td>${fmtDateTime(l.date)}</td>
+          <td>${l.type==='sale'?'<span class="badge warning">فاتورة</span>':l.type==='payment'?'<span class="badge success">دفعة</span>':'<span class="badge neutral">يدوي</span>'}</td>
+          <td style="color:${l.type==='payment'?'var(--success)':'var(--danger)'}">${l.type==='payment'?'-':'+'}${fmtMoney(l.amount)}</td>
+          <td>${esc(l.note||'')}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  openModal('سجل ديون — '+c.name, body, `<button class="btn btn-outline" onclick="closeModal()">إغلاق</button>`, {wide:true});
+}
+
+/* =========================================================
+   المصاريف اليومية  |  EXPENSES
+   ========================================================= */
+function viewExpenses(){
+  const sorted = [...state.expenses].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const todayTotal = state.expenses.filter(e=>isToday(e.date)).reduce((a,e)=>a+e.amount,0);
+  const monthTotal = state.expenses.filter(e=>isThisMonth(e.date)).reduce((a,e)=>a+e.amount,0);
+  return `
+  <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+    <div class="stat-card c-warning"><div class="bar"></div><div class="lbl">مصاريف اليوم</div><div class="val">${fmtMoney(todayTotal)}</div></div>
+    <div class="stat-card c-danger"><div class="bar"></div><div class="lbl">مصاريف هذا الشهر</div><div class="val">${fmtMoney(monthTotal)}</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>إضافة مصروف</h3></div>
+    <form id="expenseForm" onsubmit="event.preventDefault();App.addExpense();" class="field row2">
+      <div><label>الوصف</label><input name="description" required placeholder="مثال: فاتورة كهرباء"></div>
+      <div><label>المبلغ</label><input name="amount" type="number" min="0.01" step="0.01" required></div>
+      <div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">إضافة المصروف</button></div>
+    </form>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>سجل المصاريف (${sorted.length})</h3></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>الوصف</th><th>المبلغ</th><th></th></tr></thead>
+      <tbody>
+      ${sorted.length===0?`<tr><td colspan="4" class="empty-row">لا توجد مصاريف مسجلة</td></tr>`:
+        sorted.map(e=>`<tr>
+          <td>${fmtDateTime(e.date)}</td><td>${esc(e.description)}</td><td>${fmtMoney(e.amount)}</td>
+          <td><button class="btn btn-danger btn-icon" onclick="App.deleteExpense('${e.id}')">🗑️</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+function addExpense(){
+  const fd = new FormData($('#expenseForm'));
+  const description = (fd.get('description')||'').toString().trim();
+  const amount = parseFloat(fd.get('amount'))||0;
+  if(!description || amount<=0){ toast('يرجى تعبئة الحقول بشكل صحيح','danger'); return; }
+  state.expenses.push({id:uid('exp'), description, amount, date:new Date().toISOString()});
+  saveState(); renderView();
+  toast('تمت إضافة المصروف','success');
+}
+function deleteExpense(id){
+  state.expenses = state.expenses.filter(e=>e.id!==id);
+  saveState(); renderView();
+  toast('تم حذف المصروف','success');
+}
+
+/* =========================================================
+   الزبائن والموردون  |  CONTACTS
+   ========================================================= */
+let contactsTab = 'customers';
+function viewContacts(){
+  return `
+  <div class="cat-tabs" style="margin-bottom:16px;">
+    <div class="cat-tab ${contactsTab==='customers'?'active':''}" onclick="App.setContactsTab('customers')">👤 الزبائن</div>
+    <div class="cat-tab ${contactsTab==='suppliers'?'active':''}" onclick="App.setContactsTab('suppliers')">🚚 الموردون</div>
+  </div>
+  <div id="contactsBody"></div>`;
+}
+function setContactsTab(tab){ contactsTab = tab; renderView(); }
+function renderContactsBody(){
+  const el = $('#contactsBody');
+  if(!el) return;
+  if(contactsTab==='customers'){
+    el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h3>الزبائن (${state.customers.length})</h3><button class="btn btn-primary" onclick="App.openCustomerModal()">+ إضافة زبون</button></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>الاسم</th><th>الهاتف</th><th>الدين الحالي</th><th></th></tr></thead>
+        <tbody>
+        ${state.customers.length===0?`<tr><td colspan="4" class="empty-row">لا يوجد زبائن مسجلون</td></tr>`:
+          state.customers.map(c=>`<tr>
+            <td>${esc(c.name)}</td><td>${esc(c.phone||'—')}</td>
+            <td style="${c.debt>0?'color:var(--danger);font-weight:800':''}">${fmtMoney(c.debt||0)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-outline btn-icon" onclick="App.openCustomerModal('${c.id}')">✏️</button>
+              <button class="btn btn-danger btn-icon" onclick="App.deleteCustomer('${c.id}')">🗑️</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  } else {
+    el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h3>الموردون (${state.suppliers.length})</h3><button class="btn btn-primary" onclick="App.openSupplierModal()">+ إضافة مورد</button></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>الاسم</th><th>الهاتف</th><th>ملاحظات</th><th></th></tr></thead>
+        <tbody>
+        ${state.suppliers.length===0?`<tr><td colspan="4" class="empty-row">لا يوجد موردون مسجلون</td></tr>`:
+          state.suppliers.map(s=>`<tr>
+            <td>${esc(s.name)}</td><td>${esc(s.phone||'—')}</td><td>${esc(s.notes||'—')}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-outline btn-icon" onclick="App.openSupplierModal('${s.id}')">✏️</button>
+              <button class="btn btn-danger btn-icon" onclick="App.deleteSupplier('${s.id}')">🗑️</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  }
+}
+function openCustomerModal(id){
+  const c = id ? state.customers.find(x=>x.id===id) : null;
+  openModal(c?'تعديل زبون':'إضافة زبون',
+    `<form id="customerForm">
+      <div class="field"><label>الاسم *</label><input name="name" required value="${c?esc(c.name):''}"></div>
+      <div class="field"><label>الهاتف</label><input name="phone" value="${c?esc(c.phone||''):''}"></div>
+    </form>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-primary" onclick="App.saveCustomer(${c?`'${c.id}'`:'null'})">حفظ</button>`);
+}
+function saveCustomer(id){
+  const fd = new FormData($('#customerForm'));
+  const name = (fd.get('name')||'').toString().trim();
+  if(!name){ toast('يرجى إدخال الاسم','danger'); return; }
+  const data = {name, phone:(fd.get('phone')||'').toString().trim()};
+  if(id) Object.assign(state.customers.find(c=>c.id===id), data);
+  else state.customers.push(Object.assign({id:uid('cust'), debt:0}, data));
+  saveState(); closeModal(); renderView();
+  toast('تم الحفظ','success');
+}
+function deleteCustomer(id){
+  const c = state.customers.find(x=>x.id===id);
+  if(c && c.debt>0){ toast('لا يمكن حذف زبون لديه دين مستحق','danger'); return; }
+  state.customers = state.customers.filter(x=>x.id!==id);
+  saveState(); renderView();
+  toast('تم الحذف','success');
+}
+function openSupplierModal(id){
+  const s = id ? state.suppliers.find(x=>x.id===id) : null;
+  openModal(s?'تعديل مورد':'إضافة مورد',
+    `<form id="supplierForm">
+      <div class="field"><label>الاسم *</label><input name="name" required value="${s?esc(s.name):''}"></div>
+      <div class="field"><label>الهاتف</label><input name="phone" value="${s?esc(s.phone||''):''}"></div>
+      <div class="field"><label>ملاحظات</label><textarea name="notes" rows="2">${s?esc(s.notes||''):''}</textarea></div>
+    </form>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-primary" onclick="App.saveSupplier(${s?`'${s.id}'`:'null'})">حفظ</button>`);
+}
+function saveSupplier(id){
+  const fd = new FormData($('#supplierForm'));
+  const name = (fd.get('name')||'').toString().trim();
+  if(!name){ toast('يرجى إدخال الاسم','danger'); return; }
+  const data = {name, phone:(fd.get('phone')||'').toString().trim(), notes:(fd.get('notes')||'').toString().trim()};
+  if(id) Object.assign(state.suppliers.find(s=>s.id===id), data);
+  else state.suppliers.push(Object.assign({id:uid('sup')}, data));
+  saveState(); closeModal(); renderView();
+  toast('تم الحفظ','success');
+}
+function deleteSupplier(id){
+  state.suppliers = state.suppliers.filter(x=>x.id!==id);
+  saveState(); renderView();
+  toast('تم الحذف','success');
+}
+
+/* =========================================================
+   الإعدادات  |  SETTINGS
+   ========================================================= */
+function viewSettings(){
+  return `
+  <div class="panel">
+    <div class="panel-head"><h3>معلومات المحل</h3></div>
+    <form id="settingsForm" onsubmit="event.preventDefault();App.saveSettings();">
+      <div class="field row2">
+        <div><label>اسم المحل</label><input name="shopName" value="${esc(state.settings.shopName)}"></div>
+        <div><label>رمز العملة</label><input name="currency" value="${esc(state.settings.currency)}"></div>
+      </div>
+      <div class="field row2">
+        <div><label>الحد الأدنى الافتراضي للمخزون</label><input name="lowStock" type="number" min="0" value="${state.settings.lowStock}"></div>
+        <div><label>تنبيه الصلاحية قبل (بالأيام)</label><input name="expiryDays" type="number" min="1" value="${state.settings.expiryDays}"></div>
+      </div>
+      <div class="field row2">
+        <div><label>هامش الربح الافتراضي (%)</label><input name="defaultMargin" type="number" min="0" step="0.1" value="${state.settings.defaultMargin}"></div>
+        <div></div>
+      </div>
+      <button class="btn btn-primary" type="submit">حفظ الإعدادات</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>رمز حماية قسم الديون</h3></div>
+    <form id="pinForm" onsubmit="event.preventDefault();App.changePin();" class="field row2">
+      <div><label>الرمز الجديد (4 أرقام)</label><input name="newPin" maxlength="4" pattern="[0-9]{4}" placeholder="مثال: 2580" required></div>
+      <div style="align-self:end"><button class="btn btn-gold" type="submit">تحديث الرمز</button></div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>🔗 ربط الحاسوبين ومشاركة البيانات</h3><span id="syncStatus" class="hint">${syncConfig.enabled?'● جارِ الاتصال...':'● المزامنة متوقفة'}</span></div>
+    <div class="hint" style="margin-bottom:12px">استعمل نفس <b>عنوان الخادم</b> ونفس <b>رمز المحل</b> في الحاسوبين. لا تحتاج لنسخ البيانات يدويًا بعد التفعيل.</div>
+    <div class="field row2">
+      <div><label>عنوان خادم المزامنة</label><input id="syncServerUrl" value="${esc(syncConfig.serverUrl)}" placeholder="http://192.168.1.10:3000"></div>
+      <div><label>رمز المحل المشترك</label><input id="syncShopId" value="${esc(syncConfig.shopId)}" placeholder="محلي-01"></div>
+    </div>
+    <div class="field row2">
+      <div><label>مفتاح الحماية (نفس قيمة SYNC_KEY على Render)</label><input id="syncKey" type="password" autocomplete="off" value="${esc(syncConfig.key||'')}" placeholder="كلمة سر طويلة"></div>
+      <div><label>اسم هذا الحاسوب / الكاشير</label><input id="syncUserName" value="${esc(syncConfig.userName)}" placeholder="يحيى"></div>
+    </div>
+    <div class="field row2">
+      <div style="display:flex;align-items:end;gap:12px"><label style="display:flex;gap:8px;align-items:center;margin:0"><input id="syncEnabled" type="checkbox" ${syncConfig.enabled?'checked':''}> تفعيل المشاركة</label></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="App.testSync()">🔎 اختبار الاتصال</button>
+      <button class="btn btn-primary" onclick="App.saveSyncSettings()">💾 حفظ وتفعيل المزامنة</button>
+      <button class="btn btn-outline" onclick="App.syncPull(true)">🔄 جلب البيانات الآن</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>النسخ الاحتياطي للبيانات</h3><span class="hint">البيانات محفوظة داخل المتصفح فقط</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="App.exportData()">⬇️ تصدير نسخة احتياطية (JSON)</button>
+      <label class="btn btn-outline" style="position:relative;overflow:hidden;">
+        ⬆️ استيراد نسخة احتياطية
+        <input type="file" accept=".json" onchange="App.importData(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+      </label>
+      <button class="btn btn-outline" onclick="App.seedDemoData()">🧪 تحميل بيانات تجريبية</button>
+      <button class="btn btn-danger" onclick="App.resetAllData()">⚠️ حذف كل البيانات</button>
+    </div>
+  </div>`;
+}
+function saveSettings(){
+  const fd = new FormData($('#settingsForm'));
+  state.settings.shopName = (fd.get('shopName')||'متجري').toString().trim() || 'متجري';
+  state.settings.currency = (fd.get('currency')||'دج').toString().trim() || 'دج';
+  state.settings.lowStock = parseFloat(fd.get('lowStock'))||0;
+  state.settings.expiryDays = parseFloat(fd.get('expiryDays'))||30;
+  state.settings.defaultMargin = parseFloat(fd.get('defaultMargin'))||0;
+  saveState(); renderSidebar();
+  toast('تم حفظ الإعدادات','success');
+}
+function changePin(){
+  const fd = new FormData($('#pinForm'));
+  const pin = (fd.get('newPin')||'').toString().trim();
+  if(!/^[0-9]{4}$/.test(pin)){ toast('يجب أن يتكون الرمز من 4 أرقام','danger'); return; }
+  state.settings.debtPin = pin;
+  saveState();
+  toast('تم تحديث رمز الحماية','success');
+  $('#pinForm').reset();
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'نسخة_احتياطية_'+todayStr()+'.json';
+  a.click();
+  toast('تم تصدير النسخة الاحتياطية','success');
+}
+function importData(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.products || !parsed.settings){ throw new Error('صيغة غير صحيحة'); }
+      state = Object.assign(defaultState(), parsed);
+      saveState(); renderSidebar(); renderView();
+      toast('تم استيراد البيانات بنجاح','success');
+    }catch(err){ toast('ملف غير صالح للاستيراد','danger'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+function resetAllData(){
+  openModal('تأكيد حذف كل البيانات',
+    `<p>سيتم حذف <b>جميع</b> المنتجات والمبيعات والزبائن والمصاريف نهائيًا. يُنصح بتصدير نسخة احتياطية أولًا. هل أنت متأكد؟</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+     <button class="btn btn-danger" onclick="App.confirmReset()">حذف كل شيء</button>`);
+}
+function confirmReset(){
+  state = defaultState();
+  saveState(); closeModal(); renderSidebar(); navigate('dashboard');
+  toast('تم حذف جميع البيانات','success');
+}
+function seedDemoData(){
+  const demoProducts = [
+    {name:'ماء معدني 1.5 لتر', category:'مشروبات', purchasePrice:25, sellPrice:40, quantity:120, unit:'قطعة', minStock:20, barcode:'6111000000011'},
+    {name:'خبز فينو', category:'مخبزة', purchasePrice:10, sellPrice:20, quantity:8, unit:'قطعة', minStock:15, barcode:'6111000000028'},
+    {name:'حليب معلب', category:'ألبان', purchasePrice:60, sellPrice:85, quantity:3, unit:'علبة', minStock:10, expiryDate:new Date(Date.now()+15*86400000).toISOString().slice(0,10), barcode:'6111000000035'},
+    {name:'زيت مائدة 1 لتر', category:'مواد غذائية', purchasePrice:280, sellPrice:340, quantity:40, unit:'قطعة', minStock:10, barcode:'6111000000042'},
+    {name:'دفتر 100 ورقة', category:'أدوات مكتبية', purchasePrice:50, sellPrice:90, quantity:60, unit:'قطعة', minStock:10, barcode:'6111000000059'}
+  ];
+  demoProducts.forEach(p=>state.products.push(Object.assign({id:uid('prod')}, p)));
+  const c1 = {id:uid('cust'), name:'أحمد بلقاسم', phone:'0555112233', debt:0};
+  const c2 = {id:uid('cust'), name:'فاطمة الزهراء', phone:'0666445566', debt:0};
+  state.customers.push(c1, c2);
+  state.suppliers.push({id:uid('sup'), name:'شركة التوزيع الوطنية', phone:'029000000', notes:'توريد أسبوعي'});
+  saveState(); renderSidebar(); renderView();
+  toast('تم تحميل بيانات تجريبية','success');
+}
+
+/* =========================================================
+   ماسح الباركود العام (خارج نقطة البيع)  |  GLOBAL SCANNER
+   ========================================================= */
+let scanBuffer = '';
+let lastKeyTime = 0;
+document.addEventListener('keydown', function(e){
+  const activeTag = document.activeElement ? document.activeElement.tagName : '';
+  if(activeTag==='INPUT' || activeTag==='TEXTAREA' || activeTag==='SELECT') return;
+  const now = Date.now();
+  if(now-lastKeyTime>80) scanBuffer='';
+  lastKeyTime = now;
+  if(e.key==='Enter'){
+    if(scanBuffer.length>=3){
+      const code = scanBuffer;
+      if(currentView!=='pos') navigate('pos');
+      setTimeout(()=>{ processScannedBarcode(code); }, 60);
+    }
+    scanBuffer='';
+  } else if(/^[a-zA-Z0-9-]$/.test(e.key)){
+    scanBuffer += e.key;
+  }
+});
+
+/* =========================================================
+   الساعة  |  CLOCK
+   ========================================================= */
+function tickClock(){
+  const d = new Date();
+  const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  $('#clockBox').textContent = days[d.getDay()]+' — '+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+'   '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+setInterval(tickClock, 1000);
+
+/* =========================================================
+   واجهة الاستدعاء العامة (onclick) + رصد التغييرات لإعادة الرسم الجزئي
+   ========================================================= */
+const App = {
+  addToCart, changeCartQty, removeCartItem, clearCart, completeSale, posSearchEnter, togglePosDiscountType, updateTotalsDisplay,
+  openCameraScanModal, closeCameraScan, switchCameraDevice,
+  openProductModal, saveProduct, deleteProduct, confirmDeleteProduct,
+  openBulkSupplyModal, addBulkRow, removeBulkRow, updateBulkTotal, applyBulkMargin, saveBulkSupply, handleOcrFile, handleProductFileImport,
+  deletePurchaseInvoice, confirmDeletePurchaseInvoice,
+  reprintSale, openEditSaleModal, addEditSaleRow, removeEditSaleRow, onEditSaleNameInput,
+  updateEditSaleTotal, renderEditSalePayFields, updateEditSaleRemainLine, saveEditedSale,
+  deleteSale, confirmDeleteSale,
+  pinPress, pinClear, pinBackspace, lockDebts,
+  openPaymentModal, submitPayment, addManualDebt, openLedgerModal,
+  addExpense, deleteExpense,
+  setContactsTab, openCustomerModal, saveCustomer, deleteCustomer,
+  openSupplierModal, saveSupplier, deleteSupplier,
+  saveSettings, changePin, exportData, importData, resetAllData, confirmReset, seedDemoData,
+  testSync, saveSyncSettings, syncPull, syncPush
+};
+window.App = App;
+window.navigate = navigate;
+window.posSetCategory = posSetCategory;
+window.posSetCustomer = posSetCustomer;
+window.renderTotals = renderTotals;
+window.renderChange = renderChange;
+window.renderRemaining = renderRemaining;
+window.closeModal = closeModal;
+
+/* إعادة رسم أجزاء ديناميكية بعد كل renderView عام لبعض الصفحات المركّبة */
+const _origRenderView = renderView;
+renderView = function(){
+  _origRenderView();
+  if(currentView==='products') renderProductsTable();
+  if(currentView==='contacts') renderContactsBody();
+  if(currentView==='debts' && debtUnlocked) {} // already rendered fully
+};
+
+/* =========================================================
+   بدء التشغيل  |  INIT
+   ========================================================= */
+tickClock();
+renderSidebar();
+navigate('dashboard');
+startSync();
+</script>
+</body>
+</html>
